@@ -1,0 +1,140 @@
+Here’s the PDR only, clean and copy-paste ready:
+
+⸻
+
+PDR — Agent-First ACA/Medicare Plan Concierge (Phase-1 Lightweight → Scale to Heavy)
+
+0) TL;DR
+
+Build a lightweight agent weapon that ingests official ACA plan data + provider/formulary hits, explains choices with HC.gov content, and produces client-ready Top-3 plan summaries in minutes. Start lean (intake → compare → explain → export). Add compliance, renewals, CRM later.
+
+⸻
+
+1) Objectives & Non-Goals
+
+Objectives
+	•	Cut quote time from hours → minutes.
+	•	Zero guesswork: doctor/Rx fit, net premium (APTC preview), OOP risk, plain-English tradeoffs.
+	•	Generate branded one-pager + audit trail.
+	•	Integrate a custom GPT as explainer (RAG over HC.gov content).
+
+Non-Goals (Phase-1)
+	•	No EDE/DE enrollment.
+	•	No full Medicare plan quoting (use MA networks/formularies surface only).
+	•	No heavy CRM or commission reconciliation (Phase-2/3).
+
+⸻
+
+2) Primary Users & Jobs
+	•	Agent (you): Fast intake, accurate compare, clean summary, compliance notes.
+	•	Client: Receives Top-3 plan summary with human wording + clear next steps.
+
+⸻
+
+3) Data Sources
+	•	ACA plan attributes & rates: CMS Marketplace API + QHP Landscape/Exchange PUFs.
+	•	Provider networks & drug formularies: Commercial aggregator (Ideon/Vericred).
+	•	HC.gov content: Glossary + articles via JSON API, ingested nightly for RAG.
+
+⸻
+
+4) Feature Scope (Phase-1 Lightweight)
+	1.	Smart Intake (household, income, ZIP/county, age(s), doctors, prescriptions, preferences).
+	2.	Plan Lookup (ACA) → normalized plan results; compute APTC preview; surface CSR eligibility.
+	3.	Doctor & Drug Fit (IN/OUT flags; Rx tier/PA/ST).
+	4.	Fit Score → weighted across net premium, OOP risk, doctor fit, Rx fit.
+	5.	Explain & Export → custom GPT generates client summary with inline definitions; export PDF.
+	6.	Compliance Basics → SOA template + saved artifacts (inputs, outputs, explanations, data sources, timestamps).
+
+⸻
+
+5) System Architecture
+	•	Frontend: Next.js (App Router, TS).
+	•	Backend: FastAPI (Python).
+	•	DB: Postgres (SQLModel/SQLAlchemy).
+	•	Cache: Redis.
+	•	Workers: Celery/RQ for ingestion + batch lookups.
+	•	Storage: S3 for PDFs/artifacts.
+	•	LLM Layer: OpenAI custom GPT with tool bindings.
+
+⸻
+
+6) Data Model
+
+Tables:
+	•	agent (id, name, email, branding).
+	•	client (id, agent_id, demographics, zip, county, state).
+	•	intake (household size, ages, income, doctors, prescriptions, prefs, plan_year).
+	•	plan (id, plan_year, issuer, metal, deductibles, MOOP, premium, service area, benefits).
+	•	quote_result (intake_id, computed_aptc, csr_level).
+	•	plan_fit (quote_result_id, plan_id, net_premium, sub-scores, fit_score, rationale).
+	•	artifact (client_id, type, url/payload, timestamp).
+
+⸻
+
+7) API Surface (Phase-1)
+	•	POST /api/intake → create intake.
+	•	GET /api/plans → list normalized plans by zip/county/year.
+	•	POST /api/quote/preview → compute APTC, CSR, plan_fits.
+	•	POST /api/explain/top3 → GPT summary.
+	•	POST /api/export/pdf → export Top-3 summary.
+	•	POST /api/soa → generate/store SOA.
+	•	GET /api/clients/:id/artifacts → list artifacts.
+
+⸻
+
+8) Fit Score Formula
+
+fit_score = 100 * (
+  0.40 * premium_component +
+  0.30 * oop_component +
+  0.20 * doctor_component +
+  0.10 * rx_component
+)
+
+	•	premium_component: normalized inverse of net premium.
+	•	oop_component: derived from MOOP/deductible/coinsurance.
+	•	doctor_component: % in-network.
+	•	rx_component: tier/penalty weighted average.
+
+⸻
+
+9) GPT Tool Contracts
+
+hcgov_content.search → query glossary/corpus.
+plans.lookup → ACA plan list + APTC/CSR preview.
+networks_formularies.check → provider/Rx fit tags.
+
+All outputs strict JSON for downstream rendering.
+
+⸻
+
+10) RAG Ingestion
+	•	Nightly crawl of HC.gov JSON endpoints.
+	•	Chunk content by H2/H3.
+	•	Store {title,url,plan_year,updated_at,text}.
+	•	Embed + index in pgvector.
+	•	Retrieval priority: Glossary > Topic page > Other.
+
+⸻
+
+11) Security & Compliance
+	•	Encrypt PII at rest.
+	•	Store SOA + GPT/tool logs as immutable artifacts.
+	•	Always display disclaimer: “Networks and formularies change. Verify at enrollment.”
+	•	Keep plan_year + timestamp metadata in every artifact.
+
+⸻
+
+12) Acceptance Criteria (Phase-1)
+	•	Intake → Top-3 summary in <90s for typical county.
+	•	Top-3 includes ≥2 HC.gov citations.
+	•	PDF export ≤2 pages, branded, with timestamp + disclaimer.
+	•	Artifacts persisted (SOA, TOOL_IO, GPT_MSG).
+	•	Provider/Rx checks succeed ≥90% of cases.
+
+⸻
+
+13) Roadmap
+	•	Phase-2: Auto SOA, audit log UI, renewal alerts, CRM-lite.
+	•	Phase-3: Commission tracking, white-label for other agents, Medicare quoting.

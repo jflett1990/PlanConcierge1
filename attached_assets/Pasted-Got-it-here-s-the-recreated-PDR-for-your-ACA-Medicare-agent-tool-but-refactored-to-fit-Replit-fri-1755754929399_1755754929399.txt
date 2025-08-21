@@ -1,0 +1,143 @@
+Got it — here’s the recreated PDR for your ACA/Medicare agent tool, but refactored to fit Replit-friendly tech constraints (no Next.js, no Docker, no Postgres at MVP). This version is copy-paste clean.
+
+⸻
+
+PDR — Agent-First ACA/Medicare Plan Concierge (Replit-Compatible MVP)
+
+0) TL;DR
+
+A lightweight SaaS tool for agents that simplifies ACA and Medicare plan comparison. It pulls official plan data, checks doctors/prescriptions, explains tradeoffs in plain English using a custom GPT, and exports a client-ready PDF. Built lean first (intake → compare → explain → export) and expanded later (compliance, renewals, CRM).
+
+⸻
+
+1) Objectives & Non-Goals
+
+Objectives
+	•	Cut quote time from hours to minutes.
+	•	Automate provider/drug network checks.
+	•	Generate branded summaries with client-friendly language.
+	•	Provide compliance-ready artifacts (SOA, logs).
+
+Non-Goals (MVP)
+	•	No EDE/DE enrollment flows.
+	•	No Postgres, Docker, or heavy infra dependencies.
+	•	No full Medicare quoting engine (networks only at first).
+
+⸻
+
+2) Primary Users & Jobs
+	•	Agent (you): Fast, accurate quoting and summaries.
+	•	Client: Receives Top-3 plan comparison PDF with clear explanations.
+
+⸻
+
+3) Tech Stack (MVP)
+	•	Frontend: React (Vite + TypeScript).
+	•	Backend: Flask (Python, Flask-RESTX for API).
+	•	Storage: In-memory Python dicts/lists (upgrade to Postgres later).
+	•	Cache: Simple dict cache (upgrade to Redis later).
+	•	LLM Layer: OpenAI GPT (custom, with tool bindings).
+	•	PDF Export: WeasyPrint (HTML → PDF).
+
+⸻
+
+4) Data Sources
+	•	ACA plan data: CMS Marketplace API + QHP Landscape/Exchange PUFs (mocked in MVP).
+	•	Providers & Formularies: Aggregator (Ideon/Vericred), mocked in MVP.
+	•	HC.gov content: Glossary + pages via JSON API, stored for GPT retrieval.
+
+⸻
+
+5) Feature Scope (MVP)
+	1.	Smart Intake Form → Household, income, ZIP, county, ages, doctors, prescriptions, preferences.
+	2.	Plan Lookup → Normalize ACA plans; compute APTC preview; CSR eligibility.
+	3.	Provider & Drug Matching → Mock API returns in/out + tier info.
+	4.	Fit Score Engine → Weighted score across premium, OOP, doctor, Rx.
+	5.	GPT Explainer → Uses HC.gov glossary + plan data to generate plain-English summaries.
+	6.	Export PDF → Top-3 plan summary, branded with disclaimer + timestamp.
+	7.	Compliance Basics → SOA stub + logs (saved as artifacts).
+
+⸻
+
+6) Data Model (In-Memory MVP)
+
+Agent = {id, name, email, brand_name, logo_url}
+Client = {id, agent_id, first_name, last_name, email, dob, zip, county, state}
+Intake = {id, client_id, plan_year, household_size, ages[], income, doctors[], prescriptions[], prefs{}}
+Plan = {id, plan_year, issuer, name, metal, premium_full, deductible, moop, csr_flag}
+QuoteResult = {id, intake_id, aptc, csr_level}
+PlanFit = {id, quote_result_id, plan_id, net_premium, doctor_hits[], rx_hits[], rationale{}, fit_score}
+Artifact = {id, client_id, type, payload/url, created_at}
+
+
+⸻
+
+7) API Surface (MVP)
+	•	POST /intake → create intake.
+	•	GET /plans → list normalized ACA plans.
+	•	POST /quote/preview → compute APTC + CSR + fit scores.
+	•	POST /explain/top3 → GPT summary.
+	•	POST /export/pdf → generate/download PDF.
+	•	POST /soa → generate/store SOA stub.
+	•	GET /clients/:id/artifacts → list artifacts.
+
+⸻
+
+8) Fit Score Formula
+
+fit_score = 100 * (
+  0.40 * premium_component +
+  0.30 * oop_component +
+  0.20 * doctor_component +
+  0.10 * rx_component
+)
+
+	•	premium_component: normalized inverse of net premium.
+	•	oop_component: based on deductible/MOOP.
+	•	doctor_component: % in-network.
+	•	rx_component: avg. tier score with penalties for PA/ST.
+
+⸻
+
+9) GPT Tools (MVP Contracts)
+
+1) hcgov_content.search
+Input: {query} → Output: {items:[{title,url,snippet}]}
+
+2) plans.lookup
+Input: {zip, county, ages, household, income, plan_year} → Output: {plans:[...]}
+
+3) networks_formularies.check
+Input: {plan_ids, npi_list, rx_list} → Output: {providers:[...], rx:[...]}
+
+⸻
+
+10) RAG Ingestion
+	•	Nightly pull from HC.gov JSON endpoints.
+	•	Store {title,url,text,updated_at} in memory.
+	•	Priority order: Glossary > Content > Other.
+
+⸻
+
+11) Security & Compliance
+	•	Always include disclaimer: “Networks and formularies change. Verify at enrollment.”
+	•	Save all GPT/tool inputs/outputs as artifacts.
+	•	Encrypt PII fields in future DB migration (Phase-2).
+
+⸻
+
+12) Acceptance Criteria
+	•	Intake → Top-3 summary <90s.
+	•	Top-3 includes ≥2 HC.gov citations.
+	•	PDF ≤2 pages, timestamp + disclaimer.
+	•	Provider/Rx checks included (mocked but structured).
+	•	Logs (artifacts) stored per client.
+
+⸻
+
+13) Roadmap
+	•	Phase-2: Real provider/formulary API, Postgres storage, renewal engine, compliance log UI.
+	•	Phase-3: Commission tracking, white-label SaaS for other agents, Medicare quoting.
+
+⸻
+
