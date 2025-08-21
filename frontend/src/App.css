@@ -1,42 +1,183 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Plan Concierge Custom Styles */
+
+.App {
+  min-height: 100vh;
+  background-color: var(--bs-gray-100);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Wizard Progress */
+.wizard-progress {
+  background: linear-gradient(90deg, var(--bs-primary) 0%, var(--bs-info) 100%);
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Step Cards */
+.step-card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.step-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.step-header {
+  background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+  color: white;
+  padding: 1rem;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Form Controls */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Plan Cards */
+.plan-card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.plan-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+}
+
+.plan-card.selected {
+  border: 2px solid var(--bs-primary);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.metal-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metal-bronze { background-color: #cd7f32; }
+.metal-silver { background-color: #c0c0c0; }
+.metal-gold { background-color: #ffd700; }
+.metal-platinum { background-color: #e5e4e2; color: #333; }
+
+/* Fit Score */
+.fit-score {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.fit-score-excellent { color: #198754; }
+.fit-score-good { color: #20c997; }
+.fit-score-fair { color: #ffc107; }
+.fit-score-poor { color: #dc3545; }
+
+/* Concierge Sidebar */
+.concierge-sidebar {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 1rem;
+}
+
+.concierge-header {
+  background: linear-gradient(135deg, var(--bs-info), var(--bs-primary));
+  color: white;
+  padding: 1rem;
+  border-radius: 8px 8px 0 0;
+}
+
+.concierge-button {
+  border: none;
+  background: var(--bs-gray-50);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.concierge-button:hover {
+  background: var(--bs-primary);
+  color: white;
+  transform: translateX(2px);
+}
+
+.concierge-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading States */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Explanation Modal */
+.explanation-modal .modal-dialog {
+  max-width: 800px;
+}
+
+.explanation-section {
+  margin-bottom: 1.5rem;
+}
+
+.explanation-section h6 {
+  color: var(--bs-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.citation-link {
+  color: var(--bs-info);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.citation-link:hover {
+  text-decoration: underline;
+}
+
+/* Doctor/Prescription Pills */
+.provider-pill,
+.rx-pill {
+  background: var(--bs-light);
+  border: 1px solid var(--bs-gray-300);
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  margin: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.provider-pill .btn-close,
+.rx-pill .btn-close {
+  font-size: 0.7rem;
+  margin-left: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .concierge-sidebar {
+    position: static;
+    margin-top: 2rem;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .plan-card {
+    margin-bottom: 1rem;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

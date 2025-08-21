@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Concierge - Frontend Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .App { min-height: 100vh; background-color: var(--bs-gray-100); }
+        .wizard-progress { background: linear-gradient(90deg, var(--bs-primary) 0%, var(--bs-info) 100%); height: 4px; border-radius: 2px; }
+        .step-card { border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; }
+        .step-header { background: linear-gradient(135deg, var(--bs-primary), var(--bs-info)); color: white; padding: 1rem; border-radius: 8px 8px 0 0; }
+        .concierge-sidebar { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 1rem; }
+        .concierge-header { background: linear-gradient(135deg, var(--bs-info), var(--bs-primary)); color: white; padding: 1rem; border-radius: 8px 8px 0 0; }
+        .concierge-button { border: none; background: var(--bs-gray-50); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; transition: all 0.2s ease; text-align: left; width: 100%; }
+        .concierge-button:hover { background: var(--bs-primary); color: white; transform: translateX(2px); }
+        .fit-score { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+        .fit-score-excellent { color: #198754; }
+        .fit-score-good { color: #20c997; }
+        .metal-badge { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metal-silver { background-color: #c0c0c0; }
+        .metal-gold { background-color: #ffd700; }
+        .metal-bronze { background-color: #cd7f32; }
+    </style>
+</head>
+<body>
+    <div class="App">
+        <!-- Navigation -->
+        <header class="navbar navbar-dark bg-dark">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Plan Concierge</span>
+                <span class="navbar-text">Find the right health plan for you</span>
+            </div>
+        </header>
+
+        <main class="container-fluid py-4">
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-12 col-xl-8">
+                    <!-- Demo Toggle Buttons -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5>Frontend Component Demo</h5>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-primary" onclick="showIntakeWizard()">Intake Wizard</button>
+                                <button class="btn btn-outline-primary" onclick="showResults()">Results Page</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intake Wizard Demo -->
+                    <div id="intake-wizard" class="demo-section">
+                        <div class="card step-card">
+                            <div class="step-header">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 class="mb-0">Plan Concierge</h4>
+                                    <span class="badge bg-light text-dark">Step 3 of 6</span>
+                                </div>
+                                <div class="progress" style="height: 4px;">
+                                    <div class="wizard-progress" style="width: 50%;"></div>
+                                </div>
+                                <div class="mt-2">
+                                    <h5 class="mb-1">Location</h5>
+                                    <p class="mb-0 opacity-75">Where do you live?</p>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <label for="zip" class="form-label">What is your ZIP code?</label>
+                                    <input type="text" id="zip" class="form-control" value="94102" placeholder="12345" maxlength="5">
+                                    <div class="form-text">This helps us find plans available in your area.</div>
+                                </div>
+
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <strong>Location detected:</strong> San Francisco County, CA
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-2"></i>Previous
+                                    </button>
+                                    <button type="button" class="btn btn-primary">
+                                        Next<i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Demo -->
+                    <div id="results-page" class="demo-section" style="display: none;">
+                        <!-- Results Header -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h3 class="card-title mb-2">Your Health Plan Options</h3>
+                                        <p class="text-muted mb-0">
+                                            Based on your household income of $45,000, you qualify for $320/month in tax credits.
+                                            You also qualify for Silver CSR cost-sharing reductions.
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 text-md-end">
+                                        <div class="badge bg-success fs-6">12 plans found</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Plan Results Table -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recommended Plans</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Plan</th>
+                                                <th>Net Premium</th>
+                                                <th>Deductible</th>
+                                                <th>Max Out-of-Pocket</th>
+                                                <th>Fit Score</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="table-warning">
+                                                <td>
+                                                    <div>
+                                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                                            <strong>Blue Shield Silver 70 Enhanced</strong>
+                                                            <span class="badge metal-badge metal-silver">Silver</span>
+                                                            <span class="badge bg-warning text-dark">Top 1</span>
+                                                        </div>
+                                                        <div class="text-muted small">Blue Shield of California</div>
+                                                        <div class="mt-1">
+                                                            <div class="text-success small">
+                                                                <i class="bi bi-check-circle me-1"></i>2/2 providers in-network
+                                                            </div>
+                                                            <div class="text-info small">
+                                                                <i class="bi bi-capsule me-1"></i>3/3 prescriptions covered
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <strong class="text-success">$89/month</strong>
+                                                        <div class="text-muted small">($409 - $320 credit)</div>
+                                                    </div>
+                                                </td>
+                                                <td>$1,500</td>
+                                                <td>$6,000</td>
+                                                <td>
+                                                    <div class="text-center">
+                                                        <div class="fit-score fit-score-excellent">92</div>
+                                                        <small class="fit-score-excellent">Excellent Fit</small>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-chat-dots me-1"></i>Explain
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr class="table-warning">
+                                                <td>
+                                                    <div>
+                                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                                            <strong>Kaiser Silver 70 HMO</strong>
+                                                            <span class="badge metal-badge metal-silver">Silver</span>
+                                                            <span class="badge bg-warning text-dark">Top 2</span>
+                                                        </div>
+                                                        <div class="text-muted small">Kaiser Permanente</div>
+                                                        <div class="mt-1">
+                                                            <div class="text-success small">
+                                                                <i class="bi bi-check-circle me-1"></i>1/2 providers in-network
+                                                            </div>
+                                                            <div class="text-info small">
+                                                                <i class="bi bi-capsule me-1"></i>3/3 prescriptions covered
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <strong class="text-success">$125/month</strong>
+                                                        <div class="text-muted small">($445 - $320 credit)</div>
+                                                    </div>
+                                                </td>
+                                                <td>$1,800</td>
+                                                <td>$7,200</td>
+                                                <td>
+                                                    <div class="text-center">
+                                                        <div class="fit-score fit-score-good">85</div>
+                                                        <small class="fit-score-good">Good Fit</small>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-chat-dots me-1"></i>Explain
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr class="table-warning">
+                                                <td>
+                                                    <div>
+                                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                                            <strong>Anthem Gold EPO</strong>
+                                                            <span class="badge metal-badge metal-gold">Gold</span>
+                                                            <span class="badge bg-warning text-dark">Top 3</span>
+                                                        </div>
+                                                        <div class="text-muted small">Anthem Blue Cross</div>
+                                                        <div class="mt-1">
+                                                            <div class="text-success small">
+                                                                <i class="bi bi-check-circle me-1"></i>2/2 providers in-network
+                                                            </div>
+                                                            <div class="text-warning small">
+                                                                <i class="bi bi-capsule me-1"></i>2/3 prescriptions covered
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <strong class="text-success">$156/month</strong>
+                                                        <div class="text-muted small">($476 - $320 credit)</div>
+                                                    </div>
+                                                </td>
+                                                <td>$750</td>
+                                                <td>$8,550</td>
+                                                <td>
+                                                    <div class="text-center">
+                                                        <div class="fit-score fit-score-good">78</div>
+                                                        <small class="fit-score-good">Good Fit</small>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-chat-dots me-1"></i>Explain
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Concierge Sidebar -->
+                <div class="col-12 col-xl-4">
+                    <div class="concierge-sidebar">
+                        <div class="concierge-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-chat-heart me-2"></i>Ask James
+                            </h5>
+                            <p class="mb-0 opacity-75">Your Plan Concierge</p>
+                        </div>
+
+                        <div class="p-3">
+                            <p class="text-muted mb-3">
+                                Get personalized explanations about your health insurance options.
+                            </p>
+
+                            <!-- Definition Button -->
+                            <button class="concierge-button" onclick="showDefinitionDemo()">
+                                <div>
+                                    <i class="bi bi-book me-2"></i>
+                                    <strong>Explain a Term</strong>
+                                    <div class="small text-muted">Get definitions for insurance terms</div>
+                                </div>
+                            </button>
+
+                            <!-- Top 3 Summary Button -->
+                            <button class="concierge-button" onclick="showTop3Demo()">
+                                <div>
+                                    <i class="bi bi-list-stars me-2"></i>
+                                    <strong>Compare Top 3 Plans</strong>
+                                    <div class="small text-muted">See how your best options compare</div>
+                                </div>
+                            </button>
+
+                            <!-- Quick Term Buttons -->
+                            <div class="mt-4">
+                                <h6 class="text-muted mb-2">Quick Definitions</h6>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="showDefinitionDemo()">Premium</button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="showDefinitionDemo()">Deductible</button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="showDefinitionDemo()">Copayment</button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="showDefinitionDemo()">Network</button>
+                                </div>
+                            </div>
+
+                            <!-- Help Text -->
+                            <div class="mt-4 p-3 bg-light rounded">
+                                <h6 class="text-primary mb-2">
+                                    <i class="bi bi-lightbulb me-1"></i>Pro Tip
+                                </h6>
+                                <p class="small mb-0">
+                                    Use the "Explain" button next to any plan to get personalized 
+                                    insights about how it fits your specific needs and budget.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explanation Modal Demo -->
+            <div class="modal fade" id="explanationModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-chat-heart text-primary me-2"></i>
+                                Understanding Deductible
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <h6 class="text-primary">Definition</h6>
+                                <p class="text-muted">
+                                    A deductible is the amount you owe for health care services your health 
+                                    insurance plan covers before your health insurance plan begins to pay.
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <h6 class="text-primary">What this means for you</h6>
+                                <p class="text-muted">
+                                    With a $1,500 deductible, you'll pay the full cost of covered services 
+                                    until you've spent $1,500. After that, your insurance starts paying 
+                                    its share through copayments and coinsurance.
+                                </p>
+                            </div>
+                            <div class="mt-4">
+                                <h6 class="text-primary">Sources</h6>
+                                <ul class="list-unstyled">
+                                    <li>
+                                        <a href="https://www.healthcare.gov/glossary/deductible/" target="_blank" class="text-info text-decoration-none">
+                                            <i class="bi bi-box-arrow-up-right me-1"></i>
+                                            Healthcare.gov - Deductible
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="alert alert-warning mt-4">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Important:</strong> Networks and formularies change. Verify all details at enrollment.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">
+                                <i class="bi bi-printer me-2"></i>Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showIntakeWizard() {
+            document.getElementById('intake-wizard').style.display = 'block';
+            document.getElementById('results-page').style.display = 'none';
+        }
+
+        function showResults() {
+            document.getElementById('intake-wizard').style.display = 'none';
+            document.getElementById('results-page').style.display = 'block';
+        }
+
+        function showDefinitionDemo() {
+            new bootstrap.Modal(document.getElementById('explanationModal')).show();
+        }
+
+        function showTop3Demo() {
+            alert('Top 3 comparison would open here with AI-powered plan analysis comparing the three best options for your specific needs and budget.');
+        }
+
+        // Initialize with intake wizard visible
+        showIntakeWizard();
+    </script>
+</body>
+</html>

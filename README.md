@@ -232,6 +232,36 @@ POST /explain/top3
 }
 ```
 
+## Frontend Components
+
+The React frontend provides a complete user interface for plan comparison:
+
+### IntakeWizard (Multi-step Form)
+- **Household Step**: Family size and ages
+- **Income Step**: Annual income for APTC calculations  
+- **Location Step**: ZIP code for plan availability
+- **Doctors Step**: Provider NPI numbers and specialties
+- **Prescriptions Step**: Current medications with dosages
+- **Preferences Step**: Plan priorities and important features
+
+### Results Page
+- **Plan Table**: Net premium, deductible, max out-of-pocket, fit scores
+- **Coverage Indicators**: Provider network and formulary status
+- **Top 3 Highlighting**: Best plan recommendations
+- **Interactive Explanations**: Individual plan analysis buttons
+
+### Concierge Sidebar ("Ask James")
+- **Explain Term**: Insurance definitions with healthcare.gov sources
+- **Compare Top 3**: AI-powered plan comparison summaries  
+- **Quick Definitions**: One-click access to common terms
+- **Personalized Context**: Client-specific plan explanations
+
+### Features
+- **Responsive Design**: Bootstrap-based mobile-friendly interface
+- **Real-time Validation**: Form validation and error handling
+- **Loading States**: Progress indicators for API calls
+- **Modal Explanations**: Rich AI responses with citations and disclaimers
+
 ## Testing
 
 ```bash

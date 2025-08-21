@@ -13,12 +13,14 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 CORS(app)
 
-# Initialize Flask-RESTX API
+# Initialize Flask-RESTX API with custom prefix to avoid root route conflict
 api = Api(app, 
           version='1.0', 
           title='Plan Concierge API',
           description='ACA/Medicare Plan Comparison API',
-          doc='/api/docs/')
+          doc='/api/docs/',
+          prefix='/api',
+          add_specs=False)
 
 # Define API models for documentation
 doctor_model = api.model('Doctor', {
@@ -51,6 +53,27 @@ intake_model = api.model('Intake', {
     'prescriptions': fields.List(fields.Nested(prescription_model), description='Current prescriptions'),
     'prefs': fields.Nested(preferences_model, description='Preferences')
 })
+
+# Root route to serve frontend demo
+@app.route('/')
+def serve_frontend():
+    """Serve the frontend demo page"""
+    from flask import send_file
+    import os
+    
+    # Serve the frontend demo HTML
+    demo_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'src', 'demo.html')
+    if os.path.exists(demo_path):
+        return send_file(demo_path)
+    
+    # Fallback to API status
+    return jsonify({
+        "message": "Plan Concierge API",
+        "version": "1.0.0",
+        "status": "running",
+        "frontend": "Demo not found",
+        "api_docs": "/api/docs/"
+    })
 
 # Routes
 @api.route('/intake')
