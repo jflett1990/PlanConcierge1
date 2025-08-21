@@ -405,6 +405,351 @@ class ExplainTop3Resource(Resource):
                 'error': str(e)
             }, 500
 
+# PDF Export endpoint
+@api.route('/export/pdf')
+class PDFExportResource(Resource):
+    @api.doc('export_pdf')
+    @api.expect(api.model('PDFExportRequest', {
+        'client_id': fields.Integer(required=True, description='Client ID'),
+        'plans': fields.List(fields.Raw, required=True, description='Plan data to include'),
+        'quote_data': fields.Raw(required=True, description='Quote results'),
+        'explanation': fields.Raw(description='AI explanation content')
+    }))
+    def post(self):
+        """Export plan comparison as PDF"""
+        try:
+            import tempfile
+            import os
+            from weasyprint import HTML, CSS
+            from flask import send_file, url_for
+            import uuid
+            from datetime import datetime
+            
+            data = request.get_json()
+            client_id = data.get('client_id')
+            plans = data.get('plans', [])
+            quote_data = data.get('quote_data', {})
+            explanation = data.get('explanation', {})
+            
+            if not client_id or not plans:
+                return {
+                    'success': False,
+                    'error': 'Client ID and plans data are required'
+                }, 400
+            
+            # Get client info
+            client = Client.get(client_id)
+            if not client:
+                return {
+                    'success': False,
+                    'error': 'Client not found'
+                }, 404
+            
+            # Generate HTML content
+            html_content = generate_pdf_html(client, plans, quote_data, explanation)
+            
+            # Create temporary PDF file
+            pdf_filename = f"plan_comparison_{client_id}_{uuid.uuid4().hex[:8]}.pdf"
+            tmp_dir = os.path.join(os.path.dirname(__file__), '..', 'tmp')
+            os.makedirs(tmp_dir, exist_ok=True)
+            pdf_path = os.path.join(tmp_dir, pdf_filename)
+            
+            # Generate PDF with WeasyPrint
+            html_doc = HTML(string=html_content)
+            css_styles = CSS(string=get_pdf_styles())
+            html_doc.write_pdf(pdf_path, stylesheets=[css_styles])
+            
+            # Save artifact record
+            artifact = Artifact.create(
+                client_id=client_id,
+                type='pdf_comparison',
+                url=f'/download/pdf/{pdf_filename}',
+                payload={'plans_count': len(plans), 'generated_at': datetime.now().isoformat()}
+            )
+            
+            return {
+                'success': True,
+                'data': {
+                    'download_url': f'/download/pdf/{pdf_filename}',
+                    'filename': pdf_filename,
+                    'artifact_id': artifact.id
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+# PDF Download endpoint
+@app.route('/download/pdf/<filename>')
+def download_pdf(filename):
+    """Download generated PDF file"""
+    try:
+        import os
+        from flask import send_file, abort
+        
+        tmp_dir = os.path.join(os.path.dirname(__file__), '..', 'tmp')
+        pdf_path = os.path.join(tmp_dir, filename)
+        
+        if not os.path.exists(pdf_path):
+            abort(404)
+        
+        return send_file(pdf_path, as_attachment=True, download_name=filename)
+        
+    except Exception as e:
+        abort(500)
+
+def generate_pdf_html(client, plans, quote_data, explanation):
+    """Generate HTML content for PDF export"""
+    from datetime import datetime
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Health Plan Comparison - {client.first_name} {client.last_name}</title>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Health Plan Comparison Report</h1>
+            <div class="client-info">
+                <h2>Prepared for: {client.first_name} {client.last_name}</h2>
+                <p><strong>Location:</strong> {client.zip}, {client.state}</p>
+                <p><strong>Report Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+            </div>
+        </div>
+        
+        <div class="summary">
+            <h2>Plan Comparison Summary</h2>
+            <p>Based on your household information and preferences, we've identified the following health plan options:</p>
+        </div>
+        
+        <div class="plans-table">
+            <h2>Recommended Plans</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Plan Name</th>
+                        <th>Issuer</th>
+                        <th>Metal Level</th>
+                        <th>Net Premium</th>
+                        <th>Deductible</th>
+                        <th>Max Out-of-Pocket</th>
+                        <th>Fit Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+    """
+    
+    for i, plan in enumerate(plans[:10]):  # Limit to top 10 plans
+        fit_score = plan.get('fit_score', 'N/A')
+        net_premium = plan.get('net_premium', plan.get('premium_full', 0))
+        
+        html += f"""
+                    <tr class="{'top-plan' if i < 3 else ''}">
+                        <td>{plan.get('name', 'N/A')}</td>
+                        <td>{plan.get('issuer', 'N/A')}</td>
+                        <td>{plan.get('metal', 'N/A')}</td>
+                        <td>${net_premium:.2f}/month</td>
+                        <td>${plan.get('deductible', 0):,.0f}</td>
+                        <td>${plan.get('moop', 0):,.0f}</td>
+                        <td>{fit_score}</td>
+                    </tr>
+        """
+    
+    html += """
+                </tbody>
+            </table>
+        </div>
+    """
+    
+    # Add explanation if provided
+    if explanation and explanation.get('data'):
+        exp_data = explanation['data']
+        html += f"""
+        <div class="explanation">
+            <h2>{exp_data.get('title', 'Plan Analysis')}</h2>
+        """
+        
+        for section in exp_data.get('sections', []):
+            html += f"""
+            <div class="section">
+                <h3>{section.get('heading', '')}</h3>
+                <p>{section.get('body', '')}</p>
+            </div>
+            """
+        
+        # Add citations
+        citations = exp_data.get('citations', [])
+        if citations:
+            html += """
+            <div class="citations">
+                <h3>Sources</h3>
+                <ul>
+            """
+            for citation in citations:
+                html += f"""
+                    <li><a href="{citation.get('url', '')}">{citation.get('title', '')}</a></li>
+                """
+            html += """
+                </ul>
+            </div>
+            """
+        
+        html += "</div>"
+    
+    # Add important disclaimers
+    html += """
+        <div class="disclaimer">
+            <h2>Important Information</h2>
+            <ul>
+                <li><strong>Enrollment Verification:</strong> Please verify all plan details, networks, and formularies at enrollment as they may change.</li>
+                <li><strong>Premium Changes:</strong> Premiums and benefits may change annually during open enrollment.</li>
+                <li><strong>Network Access:</strong> Always confirm your providers and prescriptions are covered before enrolling.</li>
+                <li><strong>Professional Advice:</strong> This comparison is for informational purposes. Consult with licensed insurance professionals for personalized advice.</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>Generated by Plan Concierge | {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html
+
+def get_pdf_styles():
+    """Return CSS styles for PDF generation"""
+    return """
+    @page {
+        size: A4;
+        margin: 1in;
+        @top-right {
+            content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #333;
+    }
+    
+    .header {
+        border-bottom: 2px solid #007bff;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    
+    .header h1 {
+        color: #007bff;
+        margin: 0 0 10px 0;
+        font-size: 24px;
+    }
+    
+    .client-info h2 {
+        margin: 10px 0 5px 0;
+        font-size: 18px;
+        color: #495057;
+    }
+    
+    .client-info p {
+        margin: 3px 0;
+        color: #666;
+    }
+    
+    .summary, .explanation {
+        margin: 20px 0;
+    }
+    
+    .summary h2, .explanation h2 {
+        color: #007bff;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+    }
+    
+    .plans-table {
+        margin: 20px 0;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+    }
+    
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    
+    th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .top-plan {
+        background-color: #fff3cd;
+    }
+    
+    .section {
+        margin: 15px 0;
+    }
+    
+    .section h3 {
+        color: #0056b3;
+        margin: 10px 0 5px 0;
+    }
+    
+    .disclaimer {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 20px 0;
+    }
+    
+    .disclaimer h2 {
+        color: #dc3545;
+        margin-top: 0;
+    }
+    
+    .disclaimer ul {
+        margin: 10px 0;
+        padding-left: 20px;
+    }
+    
+    .disclaimer li {
+        margin: 5px 0;
+    }
+    
+    .citations ul {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    
+    .citations li {
+        margin: 5px 0;
+    }
+    
+    .footer {
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid #dee2e6;
+        text-align: center;
+        color: #666;
+        font-size: 10px;
+    }
+    """
+
 # Register APIs
 create_plans_api(api)
 create_quote_api(api)

@@ -35,7 +35,7 @@ class ApiService {
 
   // Submit intake data and get intake ID
   async submitIntake(intakeData: IntakeData): Promise<ApiResponse<{ intake_id: number }>> {
-    return this.fetchJson<{ intake_id: number }>('/intake', {
+    return this.fetchJson<{ intake_id: number }>('/api/intake', {
       method: 'POST',
       body: JSON.stringify(intakeData),
     });
@@ -43,7 +43,7 @@ class ApiService {
 
   // Get quote preview with plan recommendations
   async getQuotePreview(intakeId: number): Promise<ApiResponse<QuoteResult>> {
-    return this.fetchJson<QuoteResult>('/quote/preview', {
+    return this.fetchJson<QuoteResult>('/api/quote/preview', {
       method: 'POST',
       body: JSON.stringify({ intake_id: intakeId }),
     });
@@ -52,13 +52,13 @@ class ApiService {
   // Search healthcare.gov content
   async searchContent(query: string, limit = 5): Promise<ApiResponse<any>> {
     const params = new URLSearchParams({ q: query, limit: limit.toString() });
-    return this.fetchJson<any>(`/content/search?${params}`);
+    return this.fetchJson<any>(`/api/content/search?${params}`);
   }
 
   // Get AI explanation of insurance term
   async explainTerm(term: string): Promise<ApiResponse<ExplanationResponse>> {
     const params = new URLSearchParams({ term });
-    return this.fetchJson<ExplanationResponse>(`/explain/term?${params}`);
+    return this.fetchJson<ExplanationResponse>(`/api/explain/term?${params}`);
   }
 
   // Get AI explanation of specific plan
@@ -67,7 +67,7 @@ class ApiService {
     if (clientId) {
       params.append('client_id', clientId.toString());
     }
-    return this.fetchJson<ExplanationResponse>(`/explain/plan?${params}`);
+    return this.fetchJson<ExplanationResponse>(`/api/explain/plan?${params}`);
   }
 
   // Get AI comparison of top 3 plans
@@ -77,9 +77,22 @@ class ApiService {
       body.client_id = clientId;
     }
     
-    return this.fetchJson<ExplanationResponse>('/explain/top3', {
+    return this.fetchJson<ExplanationResponse>('/api/explain/top3', {
       method: 'POST',
       body: JSON.stringify(body),
+    });
+  }
+
+  // Export plan comparison as PDF
+  async exportPDF(pdfData: {
+    client_id: number;
+    plans: any[];
+    quote_data: any;
+    explanation?: any;
+  }): Promise<ApiResponse<{ download_url: string; filename: string; artifact_id: number }>> {
+    return this.fetchJson<{ download_url: string; filename: string; artifact_id: number }>('/api/export/pdf', {
+      method: 'POST',
+      body: JSON.stringify(pdfData),
     });
   }
 
@@ -101,7 +114,7 @@ class ApiService {
       });
     }
     
-    const url = params.toString() ? `/plans?${params}` : '/plans';
+    const url = params.toString() ? `/api/plans?${params}` : '/api/plans';
     return this.fetchJson<any>(url);
   }
 }

@@ -16,6 +16,7 @@ const Results: React.FC<ResultsProps> = ({ intakeData }) => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [explanation, setExplanation] = useState<ExplanationResponse | null>(null);
   const [intakeId, setIntakeId] = useState<number | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     loadQuoteResults();
@@ -96,6 +97,53 @@ const Results: React.FC<ResultsProps> = ({ intakeData }) => {
     return `badge metal-badge metal-${metal.toLowerCase()}`;
   };
 
+  const handleDownloadPDF = async () => {
+    if (!quoteResult || !intakeId) return;
+
+    setIsGeneratingPDF(true);
+    try {
+      // Prepare data for PDF export
+      const pdfData = {
+        client_id: intakeId,
+        plans: quoteResult.plan_fits.map(pf => ({
+          name: pf.plan.name,
+          issuer: pf.plan.issuer,
+          metal: pf.plan.metal,
+          premium_full: pf.plan.premium_full,
+          net_premium: pf.net_premium,
+          deductible: pf.plan.deductible,
+          moop: pf.plan.moop,
+          fit_score: pf.fit_score
+        })),
+        quote_data: {
+          aptc: quoteResult.aptc,
+          csr_level: quoteResult.csr_level,
+          income: intakeData.income,
+          household_size: intakeData.householdSize
+        },
+        explanation: explanation || {}
+      };
+
+      const response = await apiService.exportPDF(pdfData);
+      if (response.success && response.data?.download_url) {
+        // Create a temporary link to download the PDF
+        const link = document.createElement('a');
+        link.href = `${window.location.origin}${response.data.download_url}`;
+        link.download = response.data.filename || 'plan_comparison.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        throw new Error(response.error || 'Failed to generate PDF');
+      }
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container-fluid">
@@ -163,8 +211,27 @@ const Results: React.FC<ResultsProps> = ({ intakeData }) => {
                   </p>
                 </div>
                 <div className="col-md-4 text-md-end">
-                  <div className="badge bg-success fs-6">
-                    {quoteResult.plan_fits.length} plans found
+                  <div className="d-flex gap-2 justify-content-md-end align-items-center">
+                    <div className="badge bg-success fs-6">
+                      {quoteResult.plan_fits.length} plans found
+                    </div>
+                    <button 
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={handleDownloadPDF}
+                      disabled={isGeneratingPDF}
+                    >
+                      {isGeneratingPDF ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-file-earmark-pdf me-2"></i>
+                          Download PDF
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
