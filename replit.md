@@ -71,5 +71,12 @@ plan-concierge/
 - Complete PDF generation pipeline: HTML template → CSS styling → PDF file → secure download
 
 ## Development Phase
-Currently in: PDF Export Complete
-Next: Awaiting next set of instructions
+Currently in: Complete Harris County TX Testing
+Next: Deployment ready with comprehensive workflow verification
+
+## Testing Results
+- Harris County TX fixtures: Family of 2 (ages 35, 33), income $42k
+- 5 mock Silver plans with APTC/CSR calculations and fit scoring
+- Complete workflow: Intake → Quote Preview → AI Top-3 → PDF Export
+- All assertions pass: citations present, disclaimers included, valid PDF generation
+- API endpoints functional: /api/intake, /api/quote/preview, /api/export/pdf, /api/explain/top3
