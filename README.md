@@ -1,285 +1,215 @@
-# Plan Concierge
+# Plan Concierge - Agent-First ACA/Medicare Plan Comparison Platform
 
-Agent-first ACA/Medicare plan comparison platform with AI-powered explanations and PDF export capabilities.
+A sophisticated AI-powered ACA/Medicare plan comparison platform designed to simplify complex insurance selections through intelligent technology and comprehensive data analysis.
 
-## Project Structure
+## 🎯 Project Overview
 
+Plan Concierge is a lightweight SaaS tool for insurance agents that streamlines the entire plan recommendation process:
+
+- **Smart Intake Forms**: Capture client needs with guided workflows
+- **Automated Plan Lookup**: Pull and compare official ACA/Medicare plan data
+- **AI-Powered Explanations**: OpenAI GPT-4o integration with "James's Plan Concierge" persona
+- **Compliance-Ready PDF Exports**: Professional reports with required citations and disclaimers
+- **Automated Compliance Tracking**: Real-time monitoring of regulatory requirements
+
+## 🚀 Features
+
+### Core Functionality
+- **Multi-step Intake Wizard**: Guided data collection for clients
+- **Plan Comparison Engine**: Advanced filtering and fit scoring
+- **Provider Network Integration**: Doctor and prescription checking
+- **AI Explanations**: Plain English plan summaries and recommendations
+- **PDF Export System**: Professional client-ready documents
+
+### Compliance Dashboard
+- **Real-time Compliance Monitoring**: Track 8+ regulatory requirements
+- **Automated Rule Checking**: Documentation and deadline monitoring
+- **Interactive Dashboard**: Professional interface with scoring metrics
+- **Alert System**: Priority-based notification system
+
+### Technical Features
+- **OpenAI Integration**: GPT-4o with structured function calling
+- **Healthcare.gov Content**: Integrated glossary and educational content
+- **APTC/CSR Calculations**: Accurate tax credit and cost-sharing computations
+- **Professional UI**: Bootstrap-based responsive design
+
+## 🏗️ Architecture
+
+### Technology Stack
+- **Frontend**: React with Vite + TypeScript
+- **Backend**: Flask (Python) with Flask-RESTX for API documentation
+- **Storage**: In-memory Python dicts/lists for MVP (PostgreSQL-ready)
+- **Cache**: Simple dict cache (Redis upgrade path)
+- **LLM Layer**: OpenAI GPT with custom tool bindings
+- **PDF Export**: WeasyPrint (HTML → PDF)
+
+### Project Structure
 ```
 plan-concierge/
 ├── frontend/          # React app (Vite + TypeScript)
-│   ├── src/           # React components and logic
-│   ├── package.json   # Frontend dependencies
-│   └── vite.config.ts # Vite configuration
 ├── backend/           # Flask API with Flask-RESTX
-│   ├── app.py         # Flask app initialization
-│   ├── main.py        # Entry point
-│   ├── models.py      # Data models
-│   └── requirements.txt # Backend dependencies
 ├── shared/            # TypeScript types + JSON schemas
-│   ├── types.ts       # Shared TypeScript interfaces
-│   └── schemas.json   # JSON validation schemas
-└── README.md          # This file
+├── package.json       # Frontend dependencies
+├── pyproject.toml     # Backend dependencies
+└── README.md         # This file
 ```
 
-## Development Setup
+## 🔧 Installation & Setup
 
 ### Prerequisites
 - Python 3.11+
-- Node.js 18+
-- PostgreSQL (for production)
+- Node.js 20+
+- OpenAI API Key
 
-### Backend Setup
+### Environment Variables
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+PLAN_YEAR=2025
+DATABASE_URL=postgresql://... (optional for PostgreSQL)
+```
+
+### Quick Start
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd plan-concierge
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Backend dependencies
+   pip install -r requirements.txt
+   
+   # Frontend dependencies
+   npm install
+   ```
+
+3. **Set environment variables**
+   ```bash
+   export OPENAI_API_KEY="your_key_here"
+   export PLAN_YEAR="2025"
+   ```
+
+4. **Start the development server**
+   ```bash
+   # Start Flask backend
+   gunicorn --bind 0.0.0.0:5000 --reload main:app
+   
+   # In another terminal, start frontend (if using React dev server)
+   npm run dev
+   ```
+
+5. **Access the application**
+   - Main app: http://localhost:5000
+   - API documentation: http://localhost:5000/api/docs/
+   - Frontend demo: http://localhost:5000/frontend/src/demo.html
+
+## 📊 API Documentation
+
+### Core Endpoints
+- `POST /api/intake` - Create client intake
+- `GET /api/plans` - List available plans with filtering
+- `POST /api/quote/preview` - Generate APTC/CSR quotes
+- `POST /api/explain/top3` - AI-powered plan comparisons
+- `POST /api/export/pdf` - Generate client PDF reports
+
+### Compliance Endpoints
+- `GET /api/compliance/dashboard` - Compliance summary
+- `GET /api/compliance/rules` - List regulatory rules
+- `POST /api/compliance/checks/run` - Execute compliance checks
+- `GET /api/compliance/alerts` - Active compliance alerts
+
+Visit `/api/docs/` for interactive API documentation.
+
+## 🧪 Testing
+
+### Run All Tests
 ```bash
 cd backend
-pip install -r requirements.txt
-python main.py
-```
-The Flask API will run on http://localhost:5000
-
-### Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
-The React app will run on http://localhost:3000
-
-### API Documentation
-When the backend is running, visit http://localhost:5000/api/docs/ for interactive API documentation.
-
-## Features
-
-- **Smart Intake Forms**: Collects client information, doctors, prescriptions, and preferences
-- **Plan Lookup & Comparison**: Integrates with official plan data sources
-- **AI-Powered Explanations**: Uses OpenAI to explain plan differences in plain English
-- **PDF Export**: Generates client-ready comparison documents
-- **Compliance Tracking**: Maintains audit trails and SOA documentation
-
-## Data Storage
-
-**MVP**: In-memory storage using Python dictionaries for rapid development
-**Production**: Designed for easy migration to PostgreSQL
-
-## Environment Variables
-
-- `OPENAI_API_KEY`: Required for AI-powered explanations
-- `DATABASE_URL`: PostgreSQL connection string (production)
-- `SESSION_SECRET`: Flask session encryption key
-
-## Development Guidelines
-
-1. **Frontend**: All React components should use TypeScript and reference shared types
-2. **Backend**: Follow Flask-RESTX patterns for API documentation
-3. **Shared**: Update both `types.ts` and `schemas.json` when adding new data structures
-4. **Testing**: Use authentic data sources; avoid mock data in production paths
-
-## API Endpoints
-
-### Core APIs (Implemented)
-- `POST /intake` - Create intake form
-- `GET /clients/{id}/artifacts` - List client documents
-- `GET /plans` - List available plans with filters (zip, county, year, metal, issuer)
-- `POST /quote/preview` - Generate quote with APTC/CSR calculations and plan pricing
-
-### Planned APIs
-- `POST /explain/top3` - AI explanation of top plan options
-- `POST /export/pdf` - Generate PDF comparison
-- `POST /soa` - Create Statement of Advice stub
-
-## Plans API Usage
-
-```bash
-# Get all plans
-GET /plans
-
-# Filter by location
-GET /plans?zip=94102
-GET /plans?county=San Francisco
-
-# Filter by plan attributes  
-GET /plans?year=2024
-GET /plans?metal=Silver
-GET /plans?issuer=Blue Shield
-
-# Combine filters
-GET /plans?zip=94102&metal=Bronze&year=2024
+python -m pytest test_*.py -v
 ```
 
-## Quote API Usage
+### Test Coverage
+- **Models**: 6 tests (Agent, Client, Intake, Plan, etc.)
+- **API Endpoints**: 4 tests (intake, artifacts, etc.)
+- **Plans System**: 11 tests (filtering, location, etc.)
+- **Quote Engine**: 9 tests (APTC, CSR, fit scoring)
+- **Provider Integration**: 11 tests (network, formulary)
+- **Healthcare.gov Content**: 11 tests (search, relevance)
+- **LLM Tools**: 14 tests (OpenAI integration, explanations)
+- **Compliance System**: 15+ tests (rules, checks, dashboard)
 
-```bash
-# Generate quote with APTC calculations
-POST /quote/preview
-{
-  "intake_id": 1
-}
+**Total: 80+ comprehensive tests**
 
-# Returns:
-{
-  "success": true,
-  "data": {
-    "quote_result_id": 1,
-    "aptc": 295.56,
-    "csr_level": "70%",
-    "slcsp_premium": 720.56,
-    "income_fpl_ratio": 2.94,
-    "plans": [
-      {
-        "plan_id": "11512CA0040003",
-        "issuer": "Blue Shield of California",
-        "name": "Blue Shield Gold 80 HMO",
-        "metal": "Gold",
-        "premium_full": 489.80,
-        "net_premium": 194.24,
-        "deductible": 1500,
-        "moop": 8700,
-        "oop_risk_score": 45.23,
-        "fit_score": 85.2,
-        "csr_flag": false,
-        "provider_summary": {
-          "in_network_count": 2,
-          "total_count": 2,
-          "coverage_rate": 1.0,
-          "avg_copay": 30.0
-        },
-        "rx_summary": {
-          "covered_count": 3,
-          "total_count": 3,
-          "coverage_rate": 1.0,
-          "avg_copay": 15.0
-        },
-        "rationale": {
-          "cost_analysis": "Net premium: $194.24/month after $295.56 APTC",
-          "network_analysis": "2/2 providers in-network (100%), avg copay: $30",
-          "formulary_analysis": "3/3 prescriptions covered (100%), avg copay: $15"
-        }
-      }
-    ]
-  }
-}
-```
+## 🎯 Demo Workflows
 
-### Content Search API
+### Harris County, TX Example
+Test the complete workflow with realistic data:
+1. Family of 2 (ages 35, 33), income $42k
+2. 5 mock Silver plans with APTC/CSR calculations
+3. Complete workflow: Intake → Quote → AI Explanations → PDF Export
 
-```bash
-# Search healthcare.gov content and glossary
-GET /content/search?q=premium&limit=5
+### Compliance Tracking
+Monitor regulatory compliance in real-time:
+1. 8 implemented compliance rules
+2. Automated checking for documentation requirements
+3. Deadline monitoring and alert system
+4. Professional dashboard interface
 
-# Returns:
-{
-  "success": true,
-  "data": {
-    "query": "premium",
-    "results": [
-      {
-        "title": "Premium",
-        "url": "https://www.healthcare.gov/glossary/premium/",
-        "text": "The amount you pay for your health insurance every month...",
-        "type": "glossary",
-        "source": "healthcare.gov",
-        "relevance_score": 20
-      }
-    ],
-    "total_results": 2,
-    "stats": {
-      "total_entries": 11,
-      "glossary_entries": 7,
-      "content_entries": 4
-    }
-  }
-}
-```
+## 🚀 Deployment
 
-### AI Explanation Endpoints
+### Replit Deployment
+This project is optimized for Replit deployment:
+1. Push to GitHub
+2. Import to Replit
+3. Set environment variables
+4. Deploy with Replit Deployments
 
-```bash
-# Get AI explanation of insurance term
-GET /explain/term?term=deductible
+### Manual Deployment
+1. **Set up production environment**
+2. **Configure database** (PostgreSQL recommended)
+3. **Set environment variables**
+4. **Deploy with gunicorn**
+   ```bash
+   gunicorn --bind 0.0.0.0:5000 main:app
+   ```
 
-# Get AI explanation of specific plan
-GET /explain/plan?plan_id=11512CA0040001&client_id=1
+## 📋 Development Status
 
-# Get AI comparison of top 3 plans
-POST /explain/top3
-{
-  "plan_ids": ["11512CA0040001", "94506CA0990001", "11512CA0040003"],
-  "client_id": 1
-}
+### ✅ Completed Features
+- Complete backend API with Flask-RESTX
+- Frontend demo with React components
+- OpenAI GPT-4o integration with structured citations
+- PDF export system with professional templates
+- Compliance tracking dashboard with 8 regulatory rules
+- Comprehensive test suite (80+ tests)
+- API documentation and demo workflows
 
-# All return structured JSON:
-{
-  "success": true,
-  "data": {
-    "title": "Understanding Deductible",
-    "sections": [
-      {
-        "heading": "Definition",
-        "body": "A deductible is the amount you owe for health care services..."
-      },
-      {
-        "heading": "What this means for you", 
-        "body": "You'll need to pay this amount before insurance starts covering costs..."
-      }
-    ],
-    "citations": [
-      {
-        "title": "Deductible",
-        "url": "https://www.healthcare.gov/glossary/deductible/"
-      }
-    ]
-  },
-  "tool_calls_made": 2
-}
-```
+### 🔄 Next Steps
+- PostgreSQL database migration
+- Production deployment optimization
+- Enhanced compliance rule coverage
+- Advanced analytics dashboard
 
-## Frontend Components
+## 🤝 Contributing
 
-The React frontend provides a complete user interface for plan comparison:
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### IntakeWizard (Multi-step Form)
-- **Household Step**: Family size and ages
-- **Income Step**: Annual income for APTC calculations  
-- **Location Step**: ZIP code for plan availability
-- **Doctors Step**: Provider NPI numbers and specialties
-- **Prescriptions Step**: Current medications with dosages
-- **Preferences Step**: Plan priorities and important features
+## 📄 License
 
-### Results Page
-- **Plan Table**: Net premium, deductible, max out-of-pocket, fit scores
-- **Coverage Indicators**: Provider network and formulary status
-- **Top 3 Highlighting**: Best plan recommendations
-- **Interactive Explanations**: Individual plan analysis buttons
+This project is proprietary software. All rights reserved.
 
-### Concierge Sidebar ("Ask James")
-- **Explain Term**: Insurance definitions with healthcare.gov sources
-- **Compare Top 3**: AI-powered plan comparison summaries  
-- **Quick Definitions**: One-click access to common terms
-- **Personalized Context**: Client-specific plan explanations
+## 🆘 Support
 
-### Features
-- **Responsive Design**: Bootstrap-based mobile-friendly interface
-- **Real-time Validation**: Form validation and error handling
-- **Loading States**: Progress indicators for API calls
-- **Modal Explanations**: Rich AI responses with citations and disclaimers
+For support and questions:
+1. Check the API documentation at `/api/docs/`
+2. Review the test files for usage examples
+3. Check the compliance dashboard for regulatory guidance
 
-## Testing
+---
 
-```bash
-# Run all tests
-cd backend && python -m unittest discover tests/
-
-# Run specific test files
-cd backend && python -m unittest tests.test_models -v
-cd backend && python -m unittest tests.test_plans_api -v  
-cd backend && python -m unittest tests.test_quote_api -v
-
-# Current test coverage:
-# - Models: 6 tests covering CRUD operations
-# - API endpoints: 4 tests covering intake and artifacts
-# - Plans API: 11 tests covering filtering and data loading  
-# - Quote API: 9 tests covering APTC calculations and quote generation
-# - Provider/Formulary: 11 tests covering network and drug coverage integration
-# - Healthcare.gov Content: 11 tests covering content ingestion and search
-# - LLM Tools: 14 tests covering OpenAI tool bindings and AI explanations
-# Total: 66 tests passing
-```
+**Plan Concierge** - Simplifying ACA/Medicare plan selection through intelligent automation.
