@@ -211,13 +211,28 @@ class TestQuoteAPI(unittest.TestCase):
             plan = quote_data['plans'][0]
             required_plan_fields = [
                 'plan_id', 'issuer', 'name', 'metal', 'premium_full',
-                'net_premium', 'deductible', 'moop', 'oop_risk_score', 'csr_flag'
+                'net_premium', 'deductible', 'moop', 'oop_risk_score', 
+                'fit_score', 'csr_flag', 'provider_summary', 'rx_summary', 'rationale'
             ]
             for field in required_plan_fields:
                 self.assertIn(field, plan)
             
             # Net premium should be less than or equal to full premium
             self.assertLessEqual(plan['net_premium'], plan['premium_full'])
+            
+            # Fit score should be reasonable
+            self.assertGreaterEqual(plan['fit_score'], 0)
+            self.assertLessEqual(plan['fit_score'], 100)
+            
+            # Check provider and rx summaries exist
+            self.assertIsNotNone(plan['provider_summary'])
+            self.assertIsNotNone(plan['rx_summary'])
+            
+            # Check rationale structure
+            rationale = plan['rationale']
+            self.assertIn('cost_analysis', rationale)
+            self.assertIn('network_analysis', rationale)
+            self.assertIn('formulary_analysis', rationale)
     
     def test_quote_preview_intake_not_found(self):
         """Test quote preview with non-existent intake"""

@@ -57,7 +57,9 @@ plan-concierge/
 - Implemented quote API at POST /quote/preview with sophisticated APTC calculations
 - Added FPL tables, SLCSP premium data, and CSR eligibility determination
 - Implemented out-of-pocket risk scoring and plan fit analysis
-- All unit tests pass: 6 models + 4 API + 11 plans + 9 quote = 30 total tests
+- Created provider/formulary integration module with mock adapters for network and drug coverage
+- Enhanced quote API with provider network and formulary checking, fit score adjustments
+- All unit tests pass: 6 models + 4 API + 11 plans + 9 quote + 11 provider/formulary = 41 total tests
 - Server running successfully on port 5000 with API documentation at /api/docs/
 
 ## Development Phase

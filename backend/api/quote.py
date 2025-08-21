@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, Tuple
 from flask import request
 from flask_restx import Resource, fields
 from models import Intake, Client, Plan, QuoteResult, PlanFit
+from integrations.provider_formulary import check_providers, check_rx, get_provider_summary, get_rx_summary
 
 def load_fpl_table() -> Dict:
     """Load Federal Poverty Level table"""
@@ -150,7 +151,11 @@ def create_quote_api(api):
         'deductible': fields.Float(required=True, description='Deductible'),
         'moop': fields.Float(required=True, description='Maximum out-of-pocket'),
         'oop_risk_score': fields.Float(required=True, description='Out-of-pocket risk score'),
-        'csr_flag': fields.Boolean(required=True, description='CSR eligible')
+        'fit_score': fields.Float(required=True, description='Overall plan fit score'),
+        'csr_flag': fields.Boolean(required=True, description='CSR eligible'),
+        'provider_summary': fields.Raw(description='Provider network summary'),
+        'rx_summary': fields.Raw(description='Formulary coverage summary'),
+        'rationale': fields.Raw(description='Plan recommendation rationale')
     })
     
     quote_response_model = api.model('QuoteResponse', {
@@ -222,6 +227,25 @@ def create_quote_api(api):
                 
                 # Get available plans
                 plans = Plan.list_by_year(intake.plan_year)
+                plan_ids = [plan.id for plan in plans]
+                
+                # Check provider network and formulary coverage
+                npi_list = [doc.npi for doc in intake.doctors] if intake.doctors else []
+                rx_list = []
+                if intake.prescriptions:
+                    rx_list = [
+                        {
+                            "rxcui": rx.rxcui,
+                            "name": rx.name,
+                            "dosage": rx.dosage,
+                            "frequency": rx.frequency
+                        }
+                        for rx in intake.prescriptions
+                    ]
+                
+                # Get provider and formulary results for all plans
+                provider_results = check_providers(plan_ids, npi_list) if npi_list else {}
+                rx_results = check_rx(plan_ids, rx_list) if rx_list else {}
                 
                 # Compute plan fits
                 plan_fits = []
@@ -229,20 +253,68 @@ def create_quote_api(api):
                     net_premium = max(0, plan.premium_full - aptc)
                     oop_risk_score = compute_oop_risk_score(plan.moop, plan.deductible)
                     
+                    # Get provider and formulary hits for this plan
+                    plan_provider_results = provider_results.get(plan.id, [])
+                    plan_rx_results = rx_results.get(plan.id, [])
+                    
+                    # Calculate fit score adjustments based on network/formulary coverage
+                    base_fit_score = 100 - oop_risk_score
+                    
+                    # Provider network bonus/penalty
+                    if plan_provider_results:
+                        provider_summary = get_provider_summary(plan_provider_results)
+                        provider_bonus = provider_summary['coverage_rate'] * 10  # Up to 10 points
+                        base_fit_score += provider_bonus
+                    
+                    # Formulary coverage bonus/penalty
+                    if plan_rx_results:
+                        rx_summary = get_rx_summary(plan_rx_results)
+                        rx_bonus = rx_summary['coverage_rate'] * 15  # Up to 15 points
+                        base_fit_score += rx_bonus
+                    
+                    # Cap fit score at 100
+                    final_fit_score = min(100, base_fit_score)
+                    
+                    # Generate detailed rationale
+                    rationale = {
+                        "cost_analysis": f"Net premium: ${net_premium:.2f}/month after ${aptc:.2f} APTC",
+                        "risk_analysis": f"Out-of-pocket risk score: {oop_risk_score}/100",
+                        "network_analysis": "",
+                        "formulary_analysis": ""
+                    }
+                    
+                    if plan_provider_results:
+                        provider_summary = get_provider_summary(plan_provider_results)
+                        rationale["network_analysis"] = (
+                            f"{provider_summary['in_network_count']}/{provider_summary['total_count']} "
+                            f"providers in-network ({provider_summary['coverage_rate']*100:.0f}%)"
+                        )
+                        if provider_summary['avg_copay']:
+                            rationale["network_analysis"] += f", avg copay: ${provider_summary['avg_copay']:.0f}"
+                    
+                    if plan_rx_results:
+                        rx_summary = get_rx_summary(plan_rx_results)
+                        rationale["formulary_analysis"] = (
+                            f"{rx_summary['covered_count']}/{rx_summary['total_count']} "
+                            f"prescriptions covered ({rx_summary['coverage_rate']*100:.0f}%)"
+                        )
+                        if rx_summary['avg_copay']:
+                            rationale["formulary_analysis"] += f", avg copay: ${rx_summary['avg_copay']:.0f}"
+                    
                     # Create plan fit record
                     plan_fit = PlanFit.create(
                         quote_result_id=quote_result.id,
                         plan_id=plan.id,
                         net_premium=net_premium,
-                        doctor_hits=[],  # TODO: Implement provider matching
-                        rx_hits=[],      # TODO: Implement formulary matching
-                        rationale={
-                            "benefits_match": "Plan analysis pending",
-                            "cost_analysis": f"Net premium: ${net_premium:.2f}/month after ${aptc:.2f} APTC",
-                            "trade_offs": f"Risk score: {oop_risk_score}/100"
-                        },
-                        fit_score=100 - oop_risk_score  # Higher score = lower risk
+                        doctor_hits=plan_provider_results,
+                        rx_hits=plan_rx_results,
+                        rationale=rationale,
+                        fit_score=final_fit_score
                     )
+                    
+                    # Add provider and formulary summaries to response
+                    provider_summary = get_provider_summary(plan_provider_results) if plan_provider_results else None
+                    rx_summary = get_rx_summary(plan_rx_results) if plan_rx_results else None
                     
                     plan_fits.append({
                         'plan_id': plan.id,
@@ -254,11 +326,15 @@ def create_quote_api(api):
                         'deductible': plan.deductible,
                         'moop': plan.moop,
                         'oop_risk_score': oop_risk_score,
-                        'csr_flag': plan.csr_flag
+                        'fit_score': final_fit_score,
+                        'csr_flag': plan.csr_flag,
+                        'provider_summary': provider_summary,
+                        'rx_summary': rx_summary,
+                        'rationale': rationale
                     })
                 
                 # Sort plans by fit score (descending)
-                plan_fits.sort(key=lambda x: 100 - x['oop_risk_score'], reverse=True)
+                plan_fits.sort(key=lambda x: x['fit_score'], reverse=True)
                 
                 return {
                     'success': True,

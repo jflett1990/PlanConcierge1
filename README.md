@@ -134,7 +134,25 @@ POST /quote/preview
         "deductible": 1500,
         "moop": 8700,
         "oop_risk_score": 45.23,
-        "csr_flag": false
+        "fit_score": 85.2,
+        "csr_flag": false,
+        "provider_summary": {
+          "in_network_count": 2,
+          "total_count": 2,
+          "coverage_rate": 1.0,
+          "avg_copay": 30.0
+        },
+        "rx_summary": {
+          "covered_count": 3,
+          "total_count": 3,
+          "coverage_rate": 1.0,
+          "avg_copay": 15.0
+        },
+        "rationale": {
+          "cost_analysis": "Net premium: $194.24/month after $295.56 APTC",
+          "network_analysis": "2/2 providers in-network (100%), avg copay: $30",
+          "formulary_analysis": "3/3 prescriptions covered (100%), avg copay: $15"
+        }
       }
     ]
   }
@@ -157,5 +175,6 @@ cd backend && python -m unittest tests.test_quote_api -v
 # - API endpoints: 4 tests covering intake and artifacts
 # - Plans API: 11 tests covering filtering and data loading  
 # - Quote API: 9 tests covering APTC calculations and quote generation
-# Total: 30 tests passing
+# - Provider/Formulary: 11 tests covering network and drug coverage integration
+# Total: 41 tests passing
 ```

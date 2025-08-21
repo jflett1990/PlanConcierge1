@@ -139,6 +139,22 @@ class ClientArtifactsResource(Resource):
                 'error': str(e)
             }, 500
 
+# Add API status route 
+@app.route('/status')
+def status():
+    from flask import jsonify
+    return jsonify({
+        "message": "Plan Concierge API",
+        "version": "1.0.0",
+        "endpoints": {
+            "plans": "/plans",
+            "quote": "/quote/preview",
+            "intake": "/intake",
+            "api_docs": "/api/docs/"
+        },
+        "status": "running"
+    })
+
 # Register APIs
 create_plans_api(api)
 create_quote_api(api)
