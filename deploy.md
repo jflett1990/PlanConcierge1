@@ -23,8 +23,8 @@ git add .
 # Commit with descriptive message
 git commit -m "Initial commit: Complete Plan Concierge platform with compliance dashboard"
 
-# Add your GitHub repository as remote (replace with your actual repository URL)
-git remote add origin https://github.com/YOUR_USERNAME/plan-concierge.git
+# Add your GitHub repository as remote
+git remote add origin https://github.com/jflett1990/plan-concierge.git
 
 # Push to GitHub
 git push -u origin main
