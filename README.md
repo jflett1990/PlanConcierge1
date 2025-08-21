@@ -75,10 +75,32 @@ When the backend is running, visit http://localhost:5000/api/docs/ for interacti
 
 ## API Endpoints
 
-- `POST /api/intake` - Create intake form
-- `GET /api/plans` - List available plans  
-- `POST /api/quote/preview` - Generate quote with APTC/CSR
-- `POST /api/explain/top3` - AI explanation of top plan options
-- `POST /api/export/pdf` - Generate PDF comparison
-- `POST /api/soa` - Create Statement of Advice stub
-- `GET /api/clients/{id}/artifacts` - List client documents
+### Core APIs (Implemented)
+- `POST /intake` - Create intake form
+- `GET /clients/{id}/artifacts` - List client documents
+- `GET /plans` - List available plans with filters (zip, county, year, metal, issuer)
+
+### Planned APIs
+- `POST /quote/preview` - Generate quote with APTC/CSR
+- `POST /explain/top3` - AI explanation of top plan options
+- `POST /export/pdf` - Generate PDF comparison
+- `POST /soa` - Create Statement of Advice stub
+
+## Plans API Usage
+
+```bash
+# Get all plans
+GET /plans
+
+# Filter by location
+GET /plans?zip=94102
+GET /plans?county=San Francisco
+
+# Filter by plan attributes  
+GET /plans?year=2024
+GET /plans?metal=Silver
+GET /plans?issuer=Blue Shield
+
+# Combine filters
+GET /plans?zip=94102&metal=Bronze&year=2024
+```

@@ -5,6 +5,7 @@ from flask_cors import CORS
 from models import (
     Client, Intake, Artifact, Doctor, Prescription, Preferences
 )
+from api.plans import create_plans_api
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -136,3 +137,6 @@ class ClientArtifactsResource(Resource):
                 'success': False,
                 'error': str(e)
             }, 500
+
+# Register plans API
+create_plans_api(api)
