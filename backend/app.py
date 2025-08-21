@@ -148,9 +148,12 @@ def status():
         "version": "1.0.0",
         "endpoints": {
             "plans": "/plans",
-            "quote": "/quote/preview",
+            "quote": "/quote/preview", 
             "intake": "/intake",
             "content_search": "/content/search?q=premium",
+            "explain_term": "/explain/term?term=deductible",
+            "explain_plan": "/explain/plan?plan_id=11512CA0040001",
+            "explain_top3": "/explain/top3",
             "api_docs": "/api/docs/"
         },
         "status": "running"
@@ -211,6 +214,168 @@ class ContentSearchResource(Resource):
                 }
             }
             
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+# LLM explanation endpoints
+@api.route('/explain/term')
+class ExplainTermResource(Resource):
+    @api.doc('explain_term')
+    @api.param('term', 'Insurance term to explain', required=True)
+    def get(self):
+        """Get AI explanation of insurance term using healthcare.gov sources"""
+        try:
+            from llm.tools import define_term
+            
+            term = request.args.get('term', '').strip()
+            if not term:
+                return {
+                    'success': False,
+                    'error': 'Term parameter is required'
+                }, 400
+            
+            result = define_term(term)
+            
+            if result['success']:
+                return {
+                    'success': True,
+                    'data': result['response'],
+                    'tool_calls_made': result.get('tool_calls_made', 0)
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.get('error', 'Unknown error')
+                }, 500
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+@api.route('/explain/plan')
+class ExplainPlanResource(Resource):
+    @api.doc('explain_plan')
+    @api.param('plan_id', 'Plan ID to explain', required=True)
+    @api.param('client_id', 'Client ID for context (optional)', required=False)
+    def get(self):
+        """Get AI explanation of specific plan with client context"""
+        try:
+            from llm.tools import explain_plan
+            from models import Client, Intake
+            
+            plan_id = request.args.get('plan_id', '').strip()
+            if not plan_id:
+                return {
+                    'success': False,
+                    'error': 'Plan ID parameter is required'
+                }, 400
+            
+            # Get client context if provided
+            client_context = None
+            client_id = request.args.get('client_id')
+            if client_id:
+                try:
+                    client = Client.get(int(client_id))
+                    if client:
+                        # Get latest intake for client
+                        intakes = Intake.list_by_client(client.id)
+                        latest_intake = intakes[0] if intakes else None
+                        
+                        client_context = {
+                            'age': client.age if hasattr(client, 'age') else None,
+                            'location': f"{client.zip}, {client.state}",
+                            'county': client.county,
+                            'income': latest_intake.income if latest_intake else None,
+                            'household_size': latest_intake.household_size if latest_intake else None,
+                            'has_doctors': len(latest_intake.doctors) > 0 if latest_intake else False,
+                            'has_prescriptions': len(latest_intake.prescriptions) > 0 if latest_intake else False
+                        }
+                except (ValueError, AttributeError):
+                    pass  # Invalid client_id, continue without context
+            
+            result = explain_plan(plan_id, client_context)
+            
+            if result['success']:
+                return {
+                    'success': True,
+                    'data': result['response'],
+                    'tool_calls_made': result.get('tool_calls_made', 0)
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.get('error', 'Unknown error')
+                }, 500
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
+
+@api.route('/explain/top3')
+class ExplainTop3Resource(Resource):
+    @api.doc('explain_top3')
+    @api.expect(api.model('Top3Request', {
+        'plan_ids': fields.List(fields.String, required=True, description='List of top 3 plan IDs'),
+        'client_id': fields.Integer(description='Client ID for context (optional)')
+    }))
+    def post(self):
+        """Get AI summary comparison of top 3 plans"""
+        try:
+            from llm.tools import summarize_top3_plans
+            from models import Client, Intake
+            
+            data = request.get_json()
+            plan_ids = data.get('plan_ids', [])
+            
+            if not plan_ids or len(plan_ids) != 3:
+                return {
+                    'success': False,
+                    'error': 'Exactly 3 plan IDs are required'
+                }, 400
+            
+            # Get client context if provided
+            client_context = None
+            client_id = data.get('client_id')
+            if client_id:
+                try:
+                    client = Client.get(client_id)
+                    if client:
+                        intakes = Intake.list_by_client(client.id)
+                        latest_intake = intakes[0] if intakes else None
+                        
+                        client_context = {
+                            'age': client.age if hasattr(client, 'age') else None,
+                            'location': f"{client.zip}, {client.state}",
+                            'county': client.county,
+                            'income': latest_intake.income if latest_intake else None,
+                            'household_size': latest_intake.household_size if latest_intake else None,
+                            'has_doctors': len(latest_intake.doctors) > 0 if latest_intake else False,
+                            'has_prescriptions': len(latest_intake.prescriptions) > 0 if latest_intake else False
+                        }
+                except (ValueError, AttributeError):
+                    pass
+            
+            result = summarize_top3_plans(plan_ids, client_context)
+            
+            if result['success']:
+                return {
+                    'success': True,
+                    'data': result['response'],
+                    'tool_calls_made': result.get('tool_calls_made', 0)
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': result.get('error', 'Unknown error')
+                }, 500
+                
         except Exception as e:
             return {
                 'success': False,

@@ -190,6 +190,48 @@ GET /content/search?q=premium&limit=5
 }
 ```
 
+### AI Explanation Endpoints
+
+```bash
+# Get AI explanation of insurance term
+GET /explain/term?term=deductible
+
+# Get AI explanation of specific plan
+GET /explain/plan?plan_id=11512CA0040001&client_id=1
+
+# Get AI comparison of top 3 plans
+POST /explain/top3
+{
+  "plan_ids": ["11512CA0040001", "94506CA0990001", "11512CA0040003"],
+  "client_id": 1
+}
+
+# All return structured JSON:
+{
+  "success": true,
+  "data": {
+    "title": "Understanding Deductible",
+    "sections": [
+      {
+        "heading": "Definition",
+        "body": "A deductible is the amount you owe for health care services..."
+      },
+      {
+        "heading": "What this means for you", 
+        "body": "You'll need to pay this amount before insurance starts covering costs..."
+      }
+    ],
+    "citations": [
+      {
+        "title": "Deductible",
+        "url": "https://www.healthcare.gov/glossary/deductible/"
+      }
+    ]
+  },
+  "tool_calls_made": 2
+}
+```
+
 ## Testing
 
 ```bash
@@ -208,5 +250,6 @@ cd backend && python -m unittest tests.test_quote_api -v
 # - Quote API: 9 tests covering APTC calculations and quote generation
 # - Provider/Formulary: 11 tests covering network and drug coverage integration
 # - Healthcare.gov Content: 11 tests covering content ingestion and search
-# Total: 52 tests passing
+# - LLM Tools: 14 tests covering OpenAI tool bindings and AI explanations
+# Total: 66 tests passing
 ```

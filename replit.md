@@ -61,9 +61,11 @@ plan-concierge/
 - Enhanced quote API with provider network and formulary checking, fit score adjustments
 - Created healthcare.gov content ingestion worker with search functionality
 - Added /content/search endpoint for glossary and content lookup with relevance scoring
-- All unit tests pass: 6 models + 4 API + 11 plans + 9 quote + 11 provider/formulary + 11 hcgov = 52 total tests
+- Built LLM tool binding system with OpenAI function calling integration
+- Added AI explanation endpoints: /explain/term, /explain/plan, /explain/top3 with structured JSON output
+- All unit tests pass: 6 models + 4 API + 11 plans + 9 quote + 11 provider/formulary + 11 hcgov + 14 LLM = 66 total tests
 - Server running successfully on port 5000 with API documentation at /api/docs/
 
 ## Development Phase
-Currently in: Healthcare.gov Content Integration Complete
+Currently in: LLM Tool Binding System Complete
 Next: Awaiting next set of instructions
