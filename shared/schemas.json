@@ -1,0 +1,77 @@
+{
+  "Agent": {
+    "type": "object",
+    "properties": {
+      "id": {"type": "number"},
+      "name": {"type": "string"},
+      "email": {"type": "string", "format": "email"},
+      "brand_name": {"type": "string"},
+      "logo_url": {"type": "string", "format": "uri"}
+    },
+    "required": ["id", "name", "email", "brand_name"]
+  },
+  "Client": {
+    "type": "object",
+    "properties": {
+      "id": {"type": "number"},
+      "agent_id": {"type": "number"},
+      "first_name": {"type": "string"},
+      "last_name": {"type": "string"},
+      "email": {"type": "string", "format": "email"},
+      "dob": {"type": "string", "format": "date"},
+      "zip": {"type": "string", "pattern": "^[0-9]{5}$"},
+      "county": {"type": "string"},
+      "state": {"type": "string", "minLength": 2, "maxLength": 2}
+    },
+    "required": ["agent_id", "first_name", "last_name", "email", "dob", "zip", "county", "state"]
+  },
+  "Intake": {
+    "type": "object",
+    "properties": {
+      "id": {"type": "number"},
+      "client_id": {"type": "number"},
+      "plan_year": {"type": "number"},
+      "household_size": {"type": "number", "minimum": 1},
+      "ages": {"type": "array", "items": {"type": "number"}},
+      "income": {"type": "number", "minimum": 0},
+      "doctors": {"type": "array", "items": {"$ref": "#/definitions/Doctor"}},
+      "prescriptions": {"type": "array", "items": {"$ref": "#/definitions/Prescription"}},
+      "prefs": {"$ref": "#/definitions/Preferences"}
+    },
+    "required": ["client_id", "plan_year", "household_size", "ages", "income"]
+  },
+  "Doctor": {
+    "type": "object",
+    "properties": {
+      "npi": {"type": "string"},
+      "name": {"type": "string"},
+      "specialty": {"type": "string"}
+    },
+    "required": ["npi", "name", "specialty"]
+  },
+  "Prescription": {
+    "type": "object",
+    "properties": {
+      "rxcui": {"type": "string"},
+      "name": {"type": "string"},
+      "dosage": {"type": "string"},
+      "frequency": {"type": "string"}
+    },
+    "required": ["rxcui", "name", "dosage", "frequency"]
+  },
+  "Plan": {
+    "type": "object",
+    "properties": {
+      "id": {"type": "string"},
+      "plan_year": {"type": "number"},
+      "issuer": {"type": "string"},
+      "name": {"type": "string"},
+      "metal": {"type": "string", "enum": ["Bronze", "Silver", "Gold", "Platinum", "Catastrophic"]},
+      "premium_full": {"type": "number"},
+      "deductible": {"type": "number"},
+      "moop": {"type": "number"},
+      "csr_flag": {"type": "boolean"}
+    },
+    "required": ["id", "plan_year", "issuer", "name", "metal", "premium_full", "deductible", "moop", "csr_flag"]
+  }
+}

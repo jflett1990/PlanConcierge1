@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Plan Recommendations - Plan Concierge{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Plan Recommendations</h2>
+                <p class="text-muted">
+                    For {{ client.first_name }} {{ client.last_name }} • 
+                    {{ intake.county }}, {{ intake.state }} {{ intake.zip }}
+                </p>
+            </div>
+            <div>
+                <div class="btn-group">
+                    <a href="{{ url_for('main.export_pdf') }}" class="btn btn-success">
+                        <i class="fas fa-file-pdf me-2"></i>Export PDF
+                    </a>
+                    <a href="{{ url_for('main.generate_soa') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-signature me-2"></i>Generate SOA
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Assistance Summary -->
+{% if quote_result.aptc > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-success border-0">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-money-bill-wave fa-2x me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Financial Assistance Available</h5>
+                    <p class="mb-0">
+                        You qualify for <strong>${{ "%.2f"|format(quote_result.aptc) }}/month</strong> in premium tax credits
+                        {% if quote_result.csr_level %}
+                        and <strong>{{ quote_result.csr_level }}</strong> cost-sharing reductions.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Summary -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-lightbulb me-2 text-warning"></i>Summary
+                </h5>
+                <p class="card-text">{{ explanation.summary }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top 3 Plan Recommendations -->
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-trophy me-2 text-warning"></i>Top 3 Recommended Plans
+        </h4>
+    </div>
+</div>
+
+{% for plan_explanation in explanation.plan_explanations %}
+{% set plan_fit = quote_result.top_3[plan_explanation.rank - 1] %}
+{% set plan = plan_fit.plan %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card {% if plan_explanation.rank == 1 %}border-success{% endif %}">
+            {% if plan_explanation.rank == 1 %}
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-crown me-2"></i>Best Fit Recommendation
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge bg-primary fs-6 me-3">#{{ plan_explanation.rank }}</span>
+                            <div>
+                                <h5 class="mb-1">{{ plan.issuer }} {{ plan.name }}</h5>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-{{ 'warning' if plan.metal == 'Bronze' else 'secondary' if plan.metal == 'Silver' else 'warning text-dark' if plan.metal == 'Gold' else 'dark' }} me-2">
+                                        {{ plan.metal }}
+                                    </span>
+                                    <span class="text-muted">Fit Score: </span>
+                                    <span class="fw-bold ms-1">{{ plan_fit.fit_score }}/100</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted">{{ plan_explanation.explanation }}</p>
+                        
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <h6 class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>Advantages
+                                </h6>
+                                <ul class="list-unstyled text-sm">
+                                    {% for pro in plan_explanation.pros %}
+                                    <li><i class="fas fa-plus text-success me-2"></i>{{ pro }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-sm-6">
+                                <h6 class="text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Considerations
+                                </h6>
+                                <ul class="list-unstyled text-sm">
+                                    {% for con in plan_explanation.cons %}
+                                    <li><i class="fas fa-minus text-warning me-2"></i>{{ con }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="text-center border-start ps-4">
+                            <div class="mb-3">
+                                <div class="display-6 text-success fw-bold">
+                                    ${{ "%.2f"|format(plan_fit.net_premium) }}
+                                </div>
+                                <small class="text-muted">per month</small>
+                                {% if quote_result.aptc > 0 %}
+                                <div class="text-muted small">
+                                    <s>${{ "%.2f"|format(plan.premium_full) }}</s> 
+                                    <span class="text-success">-${{ "%.2f"|format(quote_result.aptc) }} APTC</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row text-center small">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <div class="fw-bold">${{ "{:,}"|format(plan.deductible) }}</div>
+                                        <div class="text-muted">Deductible</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="fw-bold">${{ "{:,}"|format(plan.moop) }}</div>
+                                    <div class="text-muted">Max OOP</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Provider and Prescription Details -->
+                <div class="row mt-3 pt-3 border-top">
+                    <div class="col-md-6">
+                        <h6>
+                            <i class="fas fa-user-md me-2"></i>Provider Network
+                        </h6>
+                        {% if plan_fit.doctor_coverage %}
+                            {% for doctor in plan_fit.doctor_coverage %}
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small">{{ doctor.npi }}</span>
+                                <span class="badge bg-{{ 'success' if doctor.in_network else 'danger' }}">
+                                    {{ 'In-Network' if doctor.in_network else 'Out-of-Network' }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small">No doctors specified for network check</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>
+                            <i class="fas fa-pills me-2"></i>Prescription Coverage
+                        </h6>
+                        {% if plan_fit.rx_coverage %}
+                            {% for drug in plan_fit.rx_coverage %}
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small">{{ drug.drug_name }}</span>
+                                <div>
+                                    {% if drug.covered %}
+                                        <span class="badge bg-success">Tier {{ drug.tier }}</span>
+                                        {% if drug.prior_auth %}
+                                            <span class="badge bg-warning">PA</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-danger">Not Covered</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small">No prescriptions specified for formulary check</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Plan Comparison -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-balance-scale me-2"></i>Plan Comparison
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>{{ explanation.comparison }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Terms -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book me-2"></i>Key Terms & Definitions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for citation in explanation.citations %}
+                <div class="mb-3">
+                    <strong>{{ citation.term }}:</strong> {{ citation.definition }}
+                    <br>
+                    <small class="text-muted">
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        Source: <a href="{{ citation.source_url }}" target="_blank">{{ citation.source_url }}</a>
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Next Steps -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-arrow-right me-2"></i>Next Steps
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>{{ explanation.next_steps }}</p>
+                
+                <div class="d-flex gap-2 mt-3">
+                    <a href="{{ url_for('main.export_pdf') }}" class="btn btn-success">
+                        <i class="fas fa-file-pdf me-2"></i>Download PDF Report
+                    </a>
+                    <a href="{{ url_for('main.intake_form') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus me-2"></i>New Client
+                    </a>
+                    <a href="{{ url_for('main.client_dashboard', client_id=client.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-user me-2"></i>Client Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Disclaimer -->
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Important Disclaimer:</strong> {{ explanation.disclaimer }}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,355 @@
+/* Custom styles for Plan Concierge application */
+
+:root {
+    --brand-primary: #0056b3;
+    --brand-secondary: #6c757d;
+    --brand-accent: #28a745;
+    --brand-warning: #ffc107;
+    --brand-danger: #dc3545;
+    --font-family-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Base layout improvements */
+body {
+    font-family: var(--font-family-primary);
+    line-height: 1.6;
+}
+
+/* Brand styling */
+.brand-logo {
+    color: var(--brand-primary);
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.brand-tagline {
+    color: var(--brand-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Form enhancements */
+.form-section {
+    background: rgba(var(--bs-light-rgb), 0.5);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--brand-primary);
+}
+
+.form-section h4 {
+    color: var(--brand-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.dynamic-field-entry {
+    background: rgba(var(--bs-secondary-rgb), 0.1);
+    border: 1px solid rgba(var(--bs-secondary-rgb), 0.2);
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.remove-field-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+/* Plan cards */
+.plan-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.plan-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.plan-card.recommended {
+    border-color: var(--brand-accent);
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.02) 100%);
+}
+
+.plan-header {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, #004494 100%);
+    color: white;
+    padding: 1rem 1.25rem;
+    margin: -1px -1px 1rem -1px;
+    border-radius: calc(0.375rem - 1px) calc(0.375rem - 1px) 0 0;
+}
+
+.fit-score-badge {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.375rem 0.75rem;
+    border-radius: 50px;
+}
+
+.fit-score-excellent {
+    background: linear-gradient(135deg, var(--brand-accent) 0%, #1e7e34 100%);
+    color: white;
+}
+
+.fit-score-good {
+    background: linear-gradient(135deg, var(--brand-warning) 0%, #e0a800 100%);
+    color: var(--bs-dark);
+}
+
+.fit-score-fair {
+    background: linear-gradient(135deg, var(--brand-danger) 0%, #c82333 100%);
+    color: white;
+}
+
+/* Premium display */
+.premium-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--brand-primary);
+    margin-bottom: 0.25rem;
+}
+
+.premium-subtitle {
+    font-size: 0.875rem;
+    color: var(--brand-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Coverage indicators */
+.coverage-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.coverage-excellent {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--brand-accent);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.coverage-good {
+    background: rgba(255, 193, 7, 0.1);
+    color: #b8860b;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.coverage-poor {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--brand-danger);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Loading states */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Explanation section */
+.explanation-content {
+    background: rgba(var(--bs-info-rgb), 0.05);
+    border: 1px solid rgba(var(--bs-info-rgb), 0.2);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin: 1rem 0;
+}
+
+.explanation-content h3 {
+    color: var(--brand-primary);
+    margin-bottom: 1rem;
+}
+
+.explanation-content p {
+    margin-bottom: 1rem;
+}
+
+.explanation-content ul {
+    padding-left: 1.5rem;
+}
+
+.explanation-content li {
+    margin-bottom: 0.5rem;
+}
+
+/* Compliance disclaimer */
+.compliance-disclaimer {
+    background: rgba(var(--bs-warning-rgb), 0.1);
+    border: 1px solid var(--brand-warning);
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    font-size: 0.875rem;
+}
+
+.compliance-disclaimer .disclaimer-icon {
+    color: var(--brand-warning);
+    margin-right: 0.5rem;
+}
+
+/* Results summary */
+.results-summary {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, #004494 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.aptc-amount {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.aptc-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Action buttons */
+.action-buttons {
+    background: rgba(var(--bs-light-rgb), 0.5);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.action-buttons .btn {
+    margin: 0 0.5rem 0.5rem 0;
+}
+
+/* Dashboard improvements */
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid var(--brand-primary);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--brand-primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    color: var(--brand-secondary);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .plan-card {
+        margin-bottom: 1rem;
+    }
+    
+    .premium-display {
+        font-size: 1.25rem;
+    }
+    
+    .results-summary {
+        padding: 1.5rem;
+    }
+    
+    .aptc-amount {
+        font-size: 2rem;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        margin: 0 0 0.5rem 0;
+    }
+}
+
+/* Print styles for reports */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .plan-card {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+    
+    body {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Utility classes */
+.text-brand-primary {
+    color: var(--brand-primary) !important;
+}
+
+.bg-brand-primary {
+    background-color: var(--brand-primary) !important;
+}
+
+.border-brand-primary {
+    border-color: var(--brand-primary) !important;
+}
+
+.shadow-soft {
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.rounded-lg {
+    border-radius: 0.75rem !important;
+}
