@@ -79,9 +79,9 @@ When the backend is running, visit http://localhost:5000/api/docs/ for interacti
 - `POST /intake` - Create intake form
 - `GET /clients/{id}/artifacts` - List client documents
 - `GET /plans` - List available plans with filters (zip, county, year, metal, issuer)
+- `POST /quote/preview` - Generate quote with APTC/CSR calculations and plan pricing
 
 ### Planned APIs
-- `POST /quote/preview` - Generate quote with APTC/CSR
 - `POST /explain/top3` - AI explanation of top plan options
 - `POST /export/pdf` - Generate PDF comparison
 - `POST /soa` - Create Statement of Advice stub
@@ -103,4 +103,59 @@ GET /plans?issuer=Blue Shield
 
 # Combine filters
 GET /plans?zip=94102&metal=Bronze&year=2024
+```
+
+## Quote API Usage
+
+```bash
+# Generate quote with APTC calculations
+POST /quote/preview
+{
+  "intake_id": 1
+}
+
+# Returns:
+{
+  "success": true,
+  "data": {
+    "quote_result_id": 1,
+    "aptc": 295.56,
+    "csr_level": "70%",
+    "slcsp_premium": 720.56,
+    "income_fpl_ratio": 2.94,
+    "plans": [
+      {
+        "plan_id": "11512CA0040003",
+        "issuer": "Blue Shield of California",
+        "name": "Blue Shield Gold 80 HMO",
+        "metal": "Gold",
+        "premium_full": 489.80,
+        "net_premium": 194.24,
+        "deductible": 1500,
+        "moop": 8700,
+        "oop_risk_score": 45.23,
+        "csr_flag": false
+      }
+    ]
+  }
+}
+```
+
+## Testing
+
+```bash
+# Run all tests
+cd backend && python -m unittest discover tests/
+
+# Run specific test files
+cd backend && python -m unittest tests.test_models -v
+cd backend && python -m unittest tests.test_plans_api -v  
+cd backend && python -m unittest tests.test_quote_api -v
+
+# Current test coverage:
+# - Models: 6 tests covering CRUD operations
+# - API endpoints: 4 tests covering intake and artifacts
+# - Plans API: 11 tests covering filtering and data loading  
+# - Quote API: 9 tests covering APTC calculations and quote generation
+# Total: 30 tests passing
 ```

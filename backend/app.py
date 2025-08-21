@@ -6,6 +6,7 @@ from models import (
     Client, Intake, Artifact, Doctor, Prescription, Preferences
 )
 from api.plans import create_plans_api
+from api.quote import create_quote_api
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -138,5 +139,6 @@ class ClientArtifactsResource(Resource):
                 'error': str(e)
             }, 500
 
-# Register plans API
+# Register APIs
 create_plans_api(api)
+create_quote_api(api)
