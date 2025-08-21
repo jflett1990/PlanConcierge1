@@ -78,5 +78,7 @@ Next: Deployment ready with comprehensive workflow verification
 - Harris County TX fixtures: Family of 2 (ages 35, 33), income $42k
 - 5 mock Silver plans with APTC/CSR calculations and fit scoring
 - Complete workflow: Intake → Quote Preview → AI Top-3 → PDF Export
+- OpenAI integration: Real GPT-4o explanations with structured citations
 - All assertions pass: citations present, disclaimers included, valid PDF generation
 - API endpoints functional: /api/intake, /api/quote/preview, /api/export/pdf, /api/explain/top3
+- PDF export system: Professional templates with WeasyPrint conversion and secure downloads
