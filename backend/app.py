@@ -28,4 +28,4 @@ def get_next_id(store):
     return max(store.keys(), default=0) + 1
 
 def filter_by_field(store, field, value):
-    return [item for item in store.values() if getattr(item, field, None) == value]
+    return [item for item in store.values() if hasattr(item, field) and getattr(item, field) == value]

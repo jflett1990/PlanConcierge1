@@ -39,7 +39,7 @@ class Prescription:
 class Preferences:
     max_premium: Optional[float] = None
     max_deductible: Optional[float] = None
-    important_benefits: List[str] = None
+    important_benefits: Optional[List[str]] = None
     pharmacy_preference: Optional[str] = None
 
 @dataclass
@@ -91,7 +91,7 @@ class Artifact:
     type: str
     payload: Optional[Any] = None
     url: Optional[str] = None
-    created_at: str = None
+    created_at: Optional[str] = None
 
     def __post_init__(self):
         if self.created_at is None:
