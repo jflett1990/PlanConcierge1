@@ -7,6 +7,7 @@ from models import (
 )
 from api.plans import create_plans_api
 from api.quote import create_quote_api
+from api.compliance import api as compliance_api
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -753,3 +754,4 @@ def get_pdf_styles():
 # Register APIs
 create_plans_api(api)
 create_quote_api(api)
+api.add_namespace(compliance_api, path='/compliance')

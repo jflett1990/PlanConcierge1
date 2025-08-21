@@ -1,0 +1,184 @@
+Nice start. Here’s a straight-shot review with fixes so it actually runs clean on Replit and your routes line up.
+
+What’s good
+	•	Clean Flask-RESTX setup, CORS, namespaced endpoints.
+	•	Intake model parses nested doctors/Rx/prefs.
+	•	PDF export wired (HTML→WeasyPrint).
+
+Immediate blockers / gotchas (with fixes)
+	1.	Swagger UI not generating
+
+	•	You set add_specs=False, which disables /swagger.json, so /api/docs/ will be empty.
+	•	Fix: remove it or set add_specs=True.
+
+api = Api(
+    app,
+    version='1.0',
+    title='Plan Concierge API',
+    description='ACA/Medicare Plan Comparison API',
+    doc='/api/docs/',
+    prefix='/api'  # <- keep this
+    # remove add_specs=False
+)
+
+	2.	Status route shows wrong paths
+
+	•	You added a global /api prefix, so your paths are /api/..., not /....
+	•	Fix: update the map.
+
+@app.route('/status')
+def status():
+    return jsonify({
+        "message": "Plan Concierge API",
+        "version": "1.0.0",
+        "endpoints": {
+            "plans": "/api/plans",
+            "quote": "/api/quote/preview",
+            "intake": "/api/intake",
+            "content_search": "/api/content/search?q=premium",
+            "explain_term": "/api/explain/term?term=deductible",
+            "explain_plan": "/api/explain/plan?plan_id=11512CA0040001",
+            "explain_top3": "/api/explain/top3",
+            "api_docs": "/api/docs/"
+        },
+        "status": "running"
+    })
+
+	3.	Frontend demo file path is brittle
+
+	•	../frontend/src/demo.html will 404 if your repo layout differs.
+	•	Fix: use send_from_directory and a safer root.
+
+from flask import send_from_directory
+
+@app.route('/')
+def serve_frontend():
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    demo_dir = os.path.join(root, 'frontend', 'src')
+    demo_file = 'demo.html'
+    if os.path.exists(os.path.join(demo_dir, demo_file)):
+        return send_from_directory(demo_dir, demo_file)
+    return jsonify({...})
+
+	4.	WeasyPrint on Replit
+
+	•	WeasyPrint needs system libs (Pango, Cairo). Replit often lacks them; install may fail.
+	•	Pragmatic alt: ship HTML now and add PDF later, or switch to pure-Python xhtml2pdf for MVP. If you keep WeasyPrint, add a try/except fallback:
+
+try:
+    from weasyprint import HTML, CSS
+    weasy_ok = True
+except Exception:
+    weasy_ok = False
+
+Then in /export/pdf, if not weasy_ok, return the HTML download instead.
+	5.	Content ingestor dependency
+
+	•	/api/content/search calls worker.hcgov_ingest.get_ingestor(). If that module isn’t present, you’ll 500.
+	•	Fix: add a stub that loads a small in-memory corpus so the endpoint works now.
+
+# worker/hcgov_ingest.py
+_cached = [{"title":"Premium","url":"https://www.healthcare.gov/glossary/premium/","text":"..."}]
+
+class Ingestor:
+    def search_content(self, q, limit=10):
+        ql = q.lower()
+        hits = [r for r in _cached if ql in r["title"].lower() or ql in r["text"].lower()]
+        for h in hits: h["match_snippet"] = h["text"][:220] + "..."
+        return hits[:limit]
+    def get_content_stats(self): return {"docs": len(_cached)}
+
+_singleton = Ingestor()
+def get_ingestor(): return _singleton
+
+	6.	LLM tool functions must exist
+
+	•	/explain/* relies on llm.tools.define_term, explain_plan, summarize_top3_plans.
+	•	Fix: add stubs returning deterministic JSON so UI flow works before you wire OpenAI.
+
+# llm/tools.py
+def define_term(term):
+    return {"success": True, "response":{
+        "title": f"What does '{term}' mean?",
+        "sections":[{"heading": term, "body":"Plain-English definition here."}],
+        "citations":[{"title":"HC.gov Glossary","url":"https://www.healthcare.gov/glossary/"}]
+    }, "tool_calls_made": 1}
+
+def explain_plan(plan_id, ctx=None):
+    return {"success": True, "response":{
+        "title": f"Plan {plan_id} — Summary",
+        "sections":[
+            {"heading":"Costs","body":"Net premium, deductible, MOOP..."},
+            {"heading":"Doctors & Drugs","body":"In-network + tier flags..."},
+            {"heading":"Tradeoffs","body":"Pros/cons in one line."},
+            {"heading":"What this means for you","body":"Short, direct takeaway."}
+        ],
+        "citations":[{"title":"HC.gov Glossary","url":"https://www.healthcare.gov/glossary/"}]
+    }, "tool_calls_made": 2}
+
+def summarize_top3_plans(plan_ids, ctx=None):
+    return {"success": True, "response":{
+        "title": "Top 3 Plans — Quick Compare",
+        "sections":[
+            {"heading":"Best Overall","body": f"{plan_ids[0]} — why"},
+            {"heading":"Lowest Premium","body": f"{plan_ids[1]} — why"},
+            {"heading":"Lowest OOP Risk","body": f"{plan_ids[2]} — why"},
+            {"heading":"How to decide","body":"Tie-breaker guidance."}
+        ],
+        "citations":[{"title":"HC.gov Glossary","url":"https://www.healthcare.gov/glossary/"}]
+    }, "tool_calls_made": 3}
+
+	7.	Plan field names consistency
+
+	•	In PDF you use plan.get('name'), elsewhere you likely store marketing_name or plan_name. Pick one and normalize.
+	•	Fix in table builder:
+
+plan_name = plan.get('name') or plan.get('marketing_name') or plan.get('plan_name', 'N/A')
+issuer = plan.get('issuer') or plan.get('issuer_name', 'N/A')
+
+	8.	Float formatting guard
+
+	•	net_premium may be None; f"${net_premium:.2f}" will crash.
+	•	Fix:
+
+np = plan.get('net_premium', plan.get('premium_full'))
+np_str = f"${float(np):.2f}/month" if np is not None else "N/A"
+
+	9.	Artifacts listing uses created_at
+
+	•	Ensure Artifact.create() populates created_at as an ISO string, or format it here.
+	•	Quick guard:
+
+'created_at': getattr(artifact, 'created_at', None) or ''
+
+	10.	Namespace registration clarity
+
+	•	You call create_plans_api(api) and create_quote_api(api). Make sure those functions attach their resources to the same Api instance with the /api prefix (or return a Namespace that you add via api.add_namespace(ns, path='/plans')). If they build separate Flask-RESTX Api/Blueprint objects, routes won’t show.
+
+⸻
+
+Minimal smoke test (copy/paste into Replit shell)
+
+pip install flask flask-restx flask-cors weasyprint  # or skip WeasyPrint for now
+python - <<'PY'
+from app import app
+c = app.test_client()
+print("/status =>", c.get("/status").status, c.get("/status").json["status"])
+print("/api/docs/ =>", c.get("/api/docs/").status)
+print("/api/content/search?q=premium =>", c.get("/api/content/search?q=premium").status)
+PY
+
+Quick cURL checks
+
+curl -s http://127.0.0.1:5000/status | jq
+curl -s 'http://127.0.0.1:5000/api/content/search?q=premium' | jq '.data.total_results'
+curl -s -X POST http://127.0.0.1:5000/api/explain/top3 \
+  -H 'Content-Type: application/json' \
+  -d '{"plan_ids":["p1","p2","p3"],"client_id":1}' | jq '.success'
+
+Nice-to-haves next (short)
+	•	Add /api/healthz that returns 200 for Replit health checks.
+	•	Wrap all except Exception as e with logging (print or logging.exception) so you see tracebacks in the console.
+	•	Return consistent envelopes: {success, data, error} (you’re already mostly there).
+
+If you want, paste models.py and the api/*.py modules next; I’ll align their field names with your PDF/export path and ensure the plan normalization and quote preview agree end-to-end.

@@ -10,7 +10,13 @@ _storage = {
     'plans': {},
     'quote_results': {},
     'plan_fits': {},
-    'artifacts': {}
+    'artifacts': {},
+    'compliance_rules': {},
+    'compliance_checks': {},
+    'compliance_alerts': {},
+    'compliance_rules': {},
+    'compliance_checks': {},
+    'compliance_alerts': {}
 }
 
 # Helper functions
@@ -254,3 +260,123 @@ class Artifact:
     @classmethod
     def list_by_client(cls, client_id: int):
         return filter_by_field('artifacts', 'client_id', client_id)
+
+@dataclass
+class ComplianceRule:
+    id: int
+    name: str
+    description: str
+    category: str  # 'disclosure', 'documentation', 'timing', 'licensing'
+    regulation_source: str  # 'ACA', 'Medicare', 'State', 'DOI'
+    severity: str  # 'critical', 'high', 'medium', 'low'
+    auto_check: bool  # Whether this can be automatically verified
+    check_logic: Dict[str, Any]  # JSON rules for automatic checking
+    created_at: str
+
+    @classmethod
+    def create(cls, name: str, description: str, category: str, regulation_source: str,
+               severity: str, auto_check: bool, check_logic: Dict[str, Any]):
+        rule_id = get_next_id('compliance_rules')
+        rule = cls(rule_id, name, description, category, regulation_source, 
+                  severity, auto_check, check_logic, datetime.now().isoformat())
+        _storage['compliance_rules'][rule_id] = rule
+        return rule
+
+    @classmethod
+    def get(cls, rule_id: int):
+        return _storage['compliance_rules'].get(rule_id)
+
+    @classmethod
+    def list_all(cls):
+        return list(_storage['compliance_rules'].values())
+
+    @classmethod
+    def list_by_category(cls, category: str):
+        return filter_by_field('compliance_rules', 'category', category)
+
+@dataclass
+class ComplianceCheck:
+    id: int
+    rule_id: int
+    client_id: int
+    intake_id: int
+    status: str  # 'compliant', 'non_compliant', 'warning', 'pending'
+    details: Dict[str, Any]  # Specific findings
+    checked_at: str
+    resolved_at: Optional[str] = None  # When issue was resolved (if applicable)
+
+    @classmethod
+    def create(cls, rule_id: int, client_id: int, intake_id: int, status: str, details: Dict[str, Any]):
+        check_id = get_next_id('compliance_checks')
+        check = cls(check_id, rule_id, client_id, intake_id, status, details,
+                   datetime.now().isoformat())
+        _storage['compliance_checks'][check_id] = check
+        return check
+
+    @classmethod
+    def get(cls, check_id: int):
+        return _storage['compliance_checks'].get(check_id)
+
+    @classmethod
+    def list_all(cls):
+        return list(_storage['compliance_checks'].values())
+
+    @classmethod
+    def list_by_status(cls, status: str):
+        return filter_by_field('compliance_checks', 'status', status)
+
+    @classmethod
+    def list_by_client(cls, client_id: int):
+        return filter_by_field('compliance_checks', 'client_id', client_id)
+
+    def resolve(self):
+        """Mark this check as resolved"""
+        self.status = 'compliant'
+        self.resolved_at = datetime.now().isoformat()
+
+@dataclass
+class ComplianceAlert:
+    id: int
+    rule_id: int
+    client_id: int
+    alert_type: str  # 'deadline', 'violation', 'warning'
+    message: str
+    due_date: str  # When action is required
+    priority: str  # 'urgent', 'high', 'medium', 'low'
+    status: str  # 'active', 'acknowledged', 'resolved'
+    created_at: str
+    acknowledged_at: Optional[str] = None
+
+    @classmethod
+    def create(cls, rule_id: int, client_id: int, alert_type: str, message: str,
+               due_date: str, priority: str):
+        alert_id = get_next_id('compliance_alerts')
+        alert = cls(alert_id, rule_id, client_id, alert_type, message, due_date,
+                   priority, 'active', datetime.now().isoformat())
+        _storage['compliance_alerts'][alert_id] = alert
+        return alert
+
+    @classmethod
+    def get(cls, alert_id: int):
+        return _storage['compliance_alerts'].get(alert_id)
+
+    @classmethod
+    def list_all(cls):
+        return list(_storage['compliance_alerts'].values())
+
+    @classmethod
+    def list_active(cls):
+        return filter_by_field('compliance_alerts', 'status', 'active')
+
+    @classmethod
+    def list_by_priority(cls, priority: str):
+        return filter_by_field('compliance_alerts', 'priority', priority)
+
+    def acknowledge(self):
+        """Mark this alert as acknowledged"""
+        self.status = 'acknowledged'
+        self.acknowledged_at = datetime.now().isoformat()
+
+    def resolve(self):
+        """Mark this alert as resolved"""
+        self.status = 'resolved'

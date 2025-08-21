@@ -45,6 +45,7 @@
                             <div class="btn-group" role="group">
                                 <button class="btn btn-primary" onclick="showIntakeWizard()">Intake Wizard</button>
                                 <button class="btn btn-outline-primary" onclick="showResults()">Results Page</button>
+                                <button class="btn btn-outline-success" onclick="showCompliance()">Compliance Dashboard</button>
                             </div>
                         </div>
                     </div>
@@ -363,6 +364,100 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Compliance Dashboard Demo -->
+                    <div id="compliance-dashboard" class="demo-section" style="display: none;">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h3>Compliance Tracking Dashboard</h3>
+                                    <div>
+                                        <button class="btn btn-primary me-2" onclick="runComplianceChecks()">
+                                            Run Compliance Checks
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="refreshCompliance()">
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Compliance Score Cards -->
+                                <div class="row mb-4">
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">Compliance Score</h5>
+                                                <div class="display-6 text-primary" id="compliance-percentage">0%</div>
+                                                <p class="text-muted" id="total-checks">0 total checks</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">Active Alerts</h5>
+                                                <div class="display-6 text-warning" id="active-alerts">0</div>
+                                                <p class="text-muted" id="alert-breakdown">0 urgent, 0 high priority</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6 col-md-12 mb-3">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Status Breakdown</h5>
+                                                <div class="row text-center" id="status-breakdown">
+                                                    <div class="col-3">
+                                                        <div class="text-success fw-bold">0</div>
+                                                        <small class="text-muted">Compliant</small>
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <div class="text-danger fw-bold">0</div>
+                                                        <small class="text-muted">Non-Compliant</small>
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <div class="text-warning fw-bold">0</div>
+                                                        <small class="text-muted">Warning</small>
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <div class="text-secondary fw-bold">0</div>
+                                                        <small class="text-muted">Pending</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Compliance Rules Table -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Compliance Rules</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Rule Name</th>
+                                                        <th>Category</th>
+                                                        <th>Source</th>
+                                                        <th>Severity</th>
+                                                        <th>Auto Check</th>
+                                                        <th>Description</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="compliance-rules-body">
+                                                    <tr>
+                                                        <td colspan="6" class="text-center text-muted">Loading compliance rules...</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -373,11 +468,142 @@
         function showIntakeWizard() {
             document.getElementById('intake-wizard').style.display = 'block';
             document.getElementById('results-page').style.display = 'none';
+            document.getElementById('compliance-dashboard').style.display = 'none';
         }
 
         function showResults() {
             document.getElementById('intake-wizard').style.display = 'none';
             document.getElementById('results-page').style.display = 'block';
+            document.getElementById('compliance-dashboard').style.display = 'none';
+        }
+
+        function showCompliance() {
+            document.getElementById('intake-wizard').style.display = 'none';
+            document.getElementById('results-page').style.display = 'none';
+            document.getElementById('compliance-dashboard').style.display = 'block';
+            loadComplianceData();
+        }
+
+        async function loadComplianceData() {
+            try {
+                // Load dashboard summary
+                const dashboardResponse = await fetch('/api/compliance/dashboard');
+                if (dashboardResponse.ok) {
+                    const dashboardResult = await dashboardResponse.json();
+                    if (dashboardResult.success) {
+                        updateDashboardDisplay(dashboardResult.data);
+                    }
+                }
+
+                // Load rules
+                const rulesResponse = await fetch('/api/compliance/rules');
+                if (rulesResponse.ok) {
+                    const rulesResult = await rulesResponse.json();
+                    if (rulesResult.success) {
+                        updateRulesDisplay(rulesResult.data);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load compliance data:', error);
+            }
+        }
+
+        function updateDashboardDisplay(data) {
+            document.getElementById('compliance-percentage').textContent = data.compliance_percentage + '%';
+            document.getElementById('total-checks').textContent = data.total_checks + ' total checks';
+            document.getElementById('active-alerts').textContent = data.total_active_alerts;
+            document.getElementById('alert-breakdown').textContent = 
+                `${data.alert_counts.urgent} urgent, ${data.alert_counts.high} high priority`;
+
+            const statusBreakdown = document.getElementById('status-breakdown');
+            statusBreakdown.innerHTML = `
+                <div class="col-3">
+                    <div class="text-success fw-bold">${data.status_counts.compliant}</div>
+                    <small class="text-muted">Compliant</small>
+                </div>
+                <div class="col-3">
+                    <div class="text-danger fw-bold">${data.status_counts.non_compliant}</div>
+                    <small class="text-muted">Non-Compliant</small>
+                </div>
+                <div class="col-3">
+                    <div class="text-warning fw-bold">${data.status_counts.warning}</div>
+                    <small class="text-muted">Warning</small>
+                </div>
+                <div class="col-3">
+                    <div class="text-secondary fw-bold">${data.status_counts.pending}</div>
+                    <small class="text-muted">Pending</small>
+                </div>
+            `;
+        }
+
+        function updateRulesDisplay(rules) {
+            const tbody = document.getElementById('compliance-rules-body');
+            
+            if (rules.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No compliance rules found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rules.map(rule => {
+                const severityBadge = getSeverityBadgeClass(rule.severity);
+                const categoryBadge = 'badge bg-info';
+                const sourceBadge = 'badge bg-secondary';
+                const autoCheckBadge = rule.auto_check ? 'badge bg-success' : 'badge bg-warning text-dark';
+
+                return `
+                    <tr>
+                        <td class="fw-bold">${rule.name}</td>
+                        <td><span class="${categoryBadge}">${rule.category}</span></td>
+                        <td><span class="${sourceBadge}">${rule.regulation_source}</span></td>
+                        <td><span class="${severityBadge}">${rule.severity}</span></td>
+                        <td><span class="${autoCheckBadge}">${rule.auto_check ? 'Yes' : 'Manual'}</span></td>
+                        <td><small class="text-muted">${rule.description}</small></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getSeverityBadgeClass(severity) {
+            switch (severity) {
+                case 'critical': return 'badge bg-danger';
+                case 'high': return 'badge bg-warning text-dark';
+                case 'medium': return 'badge bg-info';
+                default: return 'badge bg-secondary';
+            }
+        }
+
+        async function runComplianceChecks() {
+            try {
+                const response = await fetch('/api/compliance/checks/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        client_id: 1,
+                        intake_id: 1
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert(`Compliance checks completed: ${result.data.checks_performed} checks performed`);
+                        loadComplianceData(); // Refresh data
+                    } else {
+                        alert('Error running compliance checks: ' + result.error);
+                    }
+                } else {
+                    alert('Failed to run compliance checks');
+                }
+            } catch (error) {
+                console.error('Failed to run compliance checks:', error);
+                alert('Error running compliance checks');
+            }
+        }
+
+        async function refreshCompliance() {
+            loadComplianceData();
         }
 
         function showDefinitionDemo() {
