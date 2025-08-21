@@ -150,10 +150,72 @@ def status():
             "plans": "/plans",
             "quote": "/quote/preview",
             "intake": "/intake",
+            "content_search": "/content/search?q=premium",
             "api_docs": "/api/docs/"
         },
         "status": "running"
     })
+
+# Content search endpoint
+@api.route('/content/search')
+class ContentSearchResource(Resource):
+    @api.doc('search_content')
+    @api.param('q', 'Search query', required=True)
+    @api.param('limit', 'Maximum results (default: 10)', type='integer', default=10)
+    def get(self):
+        """Search healthcare.gov content and glossary"""
+        try:
+            from worker.hcgov_ingest import get_ingestor
+            
+            query = request.args.get('q', '').strip()
+            if not query:
+                return {
+                    'success': False,
+                    'error': 'Query parameter "q" is required'
+                }, 400
+            
+            limit = request.args.get('limit', 10)
+            try:
+                limit = int(limit)
+                if limit <= 0 or limit > 100:
+                    limit = 10
+            except (ValueError, TypeError):
+                limit = 10
+            
+            # Get ingestor and search content
+            ingestor = get_ingestor()
+            results = ingestor.search_content(query, limit)
+            
+            # Format results for response
+            formatted_results = []
+            for result in results:
+                formatted_results.append({
+                    'title': result.get('title', ''),
+                    'url': result.get('url', ''),
+                    'text': result.get('match_snippet', result.get('text', '')),
+                    'type': result.get('type', ''),
+                    'source': result.get('source', ''),
+                    'relevance_score': result.get('relevance_score', 0)
+                })
+            
+            # Get content stats
+            stats = ingestor.get_content_stats()
+            
+            return {
+                'success': True,
+                'data': {
+                    'query': query,
+                    'results': formatted_results,
+                    'total_results': len(formatted_results),
+                    'stats': stats
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }, 500
 
 # Register APIs
 create_plans_api(api)

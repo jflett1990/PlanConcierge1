@@ -159,6 +159,37 @@ POST /quote/preview
 }
 ```
 
+### Content Search API
+
+```bash
+# Search healthcare.gov content and glossary
+GET /content/search?q=premium&limit=5
+
+# Returns:
+{
+  "success": true,
+  "data": {
+    "query": "premium",
+    "results": [
+      {
+        "title": "Premium",
+        "url": "https://www.healthcare.gov/glossary/premium/",
+        "text": "The amount you pay for your health insurance every month...",
+        "type": "glossary",
+        "source": "healthcare.gov",
+        "relevance_score": 20
+      }
+    ],
+    "total_results": 2,
+    "stats": {
+      "total_entries": 11,
+      "glossary_entries": 7,
+      "content_entries": 4
+    }
+  }
+}
+```
+
 ## Testing
 
 ```bash
@@ -176,5 +207,6 @@ cd backend && python -m unittest tests.test_quote_api -v
 # - Plans API: 11 tests covering filtering and data loading  
 # - Quote API: 9 tests covering APTC calculations and quote generation
 # - Provider/Formulary: 11 tests covering network and drug coverage integration
-# Total: 41 tests passing
+# - Healthcare.gov Content: 11 tests covering content ingestion and search
+# Total: 52 tests passing
 ```
